@@ -1,0 +1,36 @@
+---
+title: "Tab API"
+description: "Reference for adding components and managing floating window tabs."
+---
+
+Each tab is an independent floating window with its own collapse state, dynamic scrolling frame, and context menus.
+
+## Component Builders
+
+| Method | Description |
+| :--- | :--- |
+| [`tab:AddButton(config)`](/components/buttons) | Adds a clickable action button or toggle switch. |
+| [`tab:AddSlider(config)`](/components/sliders) | Adds an interactive numeric or boolean slider. |
+| [`tab:AddInput(config)`](/components/inputs) | Adds a text input with action submit or toggle mode. |
+| [`tab:AddSelection(config)`](/components/selections) | Adds a dropdown picker or a nested sub-menu flyout. |
+| [`tab:AddLabel(config)`](/components/labels) | Adds a static text label or section divider. |
+
+---
+
+## Utility Methods
+
+### `tab:GetFrame()`
+
+Returns the root `TextLabel` instance of the tab header.
+
+```lua
+local frame = tab:GetFrame()
+```
+
+### `tab:closeMore()`
+
+Closes any currently active flyout panel attached to this tab.
+
+```lua
+tab:closeMore()
+```

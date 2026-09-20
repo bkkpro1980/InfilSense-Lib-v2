@@ -1,0 +1,36 @@
+{
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "InfilSense UI Library v2",
+	"colors": {
+		"primary": "#aa00ff",
+		"light": "#aa00ff",
+		"dark": "#aa00ff"
+	},
+	"navigation": {
+		"groups": [
+			{
+				"group": "Getting Started",
+				"pages": ["quickstart"]
+			},
+			{
+				"group": "Core APIs",
+				"pages": ["api-reference/app", "api-reference/tab"]
+			},
+			{
+				"group": "Components",
+				"pages": [
+					"components/buttons",
+					"components/sliders",
+					"components/inputs",
+					"components/selections",
+					"components/labels"
+				]
+			},
+			{
+				"group": "Features",
+				"pages": ["features/quick-commands", "features/grid-system"]
+			}
+		]
+	}
+}

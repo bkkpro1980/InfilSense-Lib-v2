@@ -1,0 +1,81 @@
+---
+title: "Sliders"
+description: "Interactive horizontal sliders for numbers and booleans."
+---
+
+Sliders support real-time dragging, step increments, and direct argument execution through Quick Commands.
+
+## Numeric Slider
+
+```lua
+tab:AddSlider({
+	Info = {
+		Title = "WalkSpeed",
+		Description = "Controls movement speed. In Quick Commands: 'ws 80'"
+	},
+	InternalInfo = {
+		UniqueCommandId = "player_walkspeed",
+		Aliases = { "ws", "speed" }
+	},
+	Min = 16,
+	Max = 250,
+	Default = 16,
+	Step = 1,
+	SliderType = "number",
+	Save = false, -- Set true to save value across sessions
+	Callback = function(val)
+		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.WalkSpeed = val end
+	end
+})
+```
+
+## Boolean Slider (On / Off)
+
+Setting `SliderType = "bool"` converts the slider into a binary On/Off toggle:
+
+```lua
+tab:AddSlider({
+	Info = {
+		Title = "Mute Audio",
+		Description = "Toggles client sound volume."
+	},
+	InternalInfo = {
+		UniqueCommandId = "mute_audio"
+	},
+	SliderType = "bool",
+	Default = 0, -- 0 for Off, 1 for On
+	Callback = function(val)
+		local isMuted = (val == 1)
+		print("Muted:", isMuted)
+	end
+})
+```
+
+---
+
+## Parameters
+
+<ParamField path="Min" type="number" default="0">
+	Minimum boundary value.
+</ParamField>
+
+<ParamField path="Max" type="number" default="100">
+	Maximum boundary value.
+</ParamField>
+
+<ParamField path="Default" type="number" default="Min">
+	Initial default value.
+</ParamField>
+
+<ParamField path="Step" type="number" default="1">
+	Step interval to snap to when dragging.
+</ParamField>
+
+<ParamField path="SliderType" type="string" default="number">
+	`"number"` or `"bool"`.
+</ParamField>
+
+<ParamField path="Save" type="boolean" default="false">
+	When `true`, automatically saves and restores the slider value across sessions.
+</ParamField>

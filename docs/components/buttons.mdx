@@ -1,0 +1,103 @@
+---
+title: "Buttons & Toggles"
+description: "Standard action triggers and stateful toggle switches."
+---
+
+Buttons can function as one-click action triggers or persistent stateful toggles.
+
+## Action Button
+
+```lua
+tab:AddButton({
+	Info = {
+		Title = "Respawn",
+		Description = "Resets character humanoid health."
+	},
+	InternalInfo = {
+		Aliases = { "re", "reset" }
+	},
+	Callback = function()
+		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.Health = 0 end
+	end
+})
+```
+
+## Toggle Button
+
+Setting `InternalInfo.Toggle = true` adds a vertical accent indicator and gradient background when active.
+
+```lua
+tab:AddButton({
+	Info = {
+		Title = "Noclip",
+		Description = "Walk through solid barriers."
+	},
+	InternalInfo = {
+		Toggle = true,
+		Bindable = true,			-- Enables right-click keybind assignment
+		StartupAvailable = true,	-- Enables right-click run-on-startup
+		UniqueCommandId = "noclip_cmd",
+		Aliases = { "nc" }
+	},
+	Callback = function(enabled)
+		print("Noclip state:", enabled)
+	end
+})
+```
+
+### Context Menu (Right-Click)
+
+When `Bindable = true` or `StartupAvailable = true`, right-clicking the button opens a context flyout:
+- **Assign Keybind**: Prompts for any key on your keyboard.
+- **Toggle Startup**: Automatically executes this toggle with `true` every time the script runs.
+
+---
+
+## Parameters
+
+<ParamField path="Info.Title" type="string" default='"Button"'>
+	Text displayed on the button.
+</ParamField>
+
+<ParamField path="Info.Description" type="string" optional>
+	Tooltip text shown on hover.
+</ParamField>
+
+<ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
+	Stable identifier used for saved keybinds, startup state, and Quick Commands lookup. A random ID is generated if omitted, but a stable ID is required for `Bindable`/`StartupAvailable` to persist correctly across sessions.
+</ParamField>
+
+<ParamField path="InternalInfo.Toggle" type="boolean" default="false">
+	When `true`, the button behaves as a stateful toggle instead of a one-shot action, and `Callback` receives the new boolean state.
+</ParamField>
+
+<ParamField path="InternalInfo.Bindable" type="boolean" default="false">
+	When `true`, right-clicking the button opens a context menu to assign a keyboard shortcut.
+</ParamField>
+
+<ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
+	When `true`, right-clicking the button opens a context menu option to auto-run it (with state `true`) every time the script loads.
+</ParamField>
+
+<ParamField path="InternalInfo.Aliases" type="string[]" default="{}">
+	Alternate names this button responds to in Quick Commands.
+</ParamField>
+
+<ParamField path="Callback" type="function" required>
+	Called on activation. Receives `(state: boolean)` when `Toggle = true`, otherwise called with no arguments.
+</ParamField>
+
+---
+
+## Button Object Methods
+
+The object returned by `:AddButton()` exposes the following helpers:
+
+```lua
+local btn = tab:AddButton({ ... })
+
+btn:setVisualState(true)	-- Manually updates visual indicator & gradient
+local val = btn:getValue()	-- Returns active boolean state
+btn:activate()				-- Simulates an activation click
+```

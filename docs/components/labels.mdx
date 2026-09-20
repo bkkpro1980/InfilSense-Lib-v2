@@ -1,0 +1,55 @@
+---
+title: "Labels"
+description: "Static text rows for titles, section headers, and version tags."
+---
+
+Labels allow adding non-interactive descriptions, category dividers, or script metadata.
+
+## Simple Label
+
+Pass a string directly to render a standard label:
+
+```lua
+tab:AddLabel("Player Configuration")
+```
+
+## Custom Styled Label
+
+Pass a configuration table to customize color, text size, and typography:
+
+```lua
+tab:AddLabel({
+	Text = "Version 2.1.0 • Stable Release",
+	TextColor3 = Color3.fromRGB(150, 150, 150),
+	TextSize = 12
+})
+```
+
+---
+
+## Parameters
+
+Pass a plain `string` for a simple label, or a table for a styled one:
+
+<ParamField path="Text" type="string" default='"Label"'>
+	The label's text content. Also accepts `Info.Title` as a fallback.
+</ParamField>
+
+<ParamField path="TextColor3" type="Color3" default="Color3.fromRGB(text color)">
+	Overrides the label's text color.
+</ParamField>
+
+<ParamField path="TextSize" type="number" default="13">
+	Overrides the label's font size.
+</ParamField>
+
+---
+
+### Label Object Methods
+
+```lua
+local myLabel = tab:AddLabel("Initial text")
+
+myLabel:SetText("Updated text string")
+local currentText = myLabel:GetText()
+```

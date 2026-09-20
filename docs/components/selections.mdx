@@ -1,0 +1,120 @@
+---
+title: "Selections & Flyouts"
+description: "Single-select dropdown pickers and nested sub-menu panels."
+---
+
+Selections open a secondary `moreScroll` panel beside the tab. Flyouts detect screen boundaries automatically and flip to the left if near the edge of the monitor.
+
+## Single-Select Dropdown
+
+```lua
+local picker = tab:AddSelection({
+	Info = {
+		Title = "Select Destination",
+		Description = "Choose a waypoint from the flyout list."
+	},
+	SingleSelect = true,
+	DefaultValue = "Spawn",
+	InternalInfo = {
+		UniqueCommandId = "destination_picker",
+		Aliases = { "dest", "waypoint" }
+	},
+	Callback = function(selectedOption)
+		print("Selected:", selectedOption)
+	end
+})
+
+picker:AddOption({ Info = { Title = "Spawn Point" }, Value = "Spawn" })
+picker:AddOption({ Info = { Title = "Shop Area" }, Value = "Shop" })
+picker:AddOption({ Info = { Title = "Bank Vault" }, Value = "Vault" })
+```
+
+## Nested Sub-Menu
+
+Selections can also hold nested buttons, sliders, and inputs, creating full secondary sub-menus:
+
+```lua
+local subMenu = tab:AddSelection({
+	Info = { Title = "ESP Configuration" }
+})
+
+subMenu:AddLabel("Visual Settings")
+
+subMenu:AddButton({
+	Info = { Title = "Show Tracers" },
+	InternalInfo = { Toggle = true, UniqueCommandId = "esp_tracers" },
+	Callback = function(state) print("Tracers:", state) end
+})
+
+subMenu:AddSlider({
+	Info = { Title = "Max Distance" },
+	Min = 100,
+	Max = 3000,
+	Default = 1000,
+	Callback = function(dist) print("Distance:", dist) end
+})
+```
+
+---
+
+## Parameters
+
+<ParamField path="Info.Title" type="string" default='"Selection"'>
+	Text displayed on the selection row.
+</ParamField>
+
+<ParamField path="Info.Description" type="string" optional>
+	Tooltip text shown on hover.
+</ParamField>
+
+<ParamField path="SingleSelect" type="boolean" default="false">
+	When `true`, choosing one option automatically deselects the others (dropdown-style). When `false`, options behave as an independent multi-toggle sub-menu.
+</ParamField>
+
+<ParamField path="DefaultValue" type="any" optional>
+	Initial selected value when `SingleSelect = true`.
+</ParamField>
+
+<ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
+	Stable identifier used for saved keybinds, startup state, and Quick Commands lookup.
+</ParamField>
+
+<ParamField path="InternalInfo.Bindable" type="boolean" default="false">
+	When `true`, right-clicking the selection row opens a context menu to assign a keyboard shortcut.
+</ParamField>
+
+<ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
+	When `true`, right-clicking opens a context menu option to auto-run this selection on script start.
+</ParamField>
+
+<ParamField path="InternalInfo.Aliases" type="string[]" default="{}">
+	Alternate names this selection responds to in Quick Commands.
+</ParamField>
+
+<ParamField path="Callback" type="function" optional>
+	Called when the selection row itself is activated (not an individual option). Receives the current value.
+</ParamField>
+
+---
+
+## Selection Object Methods
+
+The object returned by `:AddSelection()` exposes the following:
+
+```lua
+local picker = tab:AddSelection({ ... })
+
+picker:AddOption({ Info = { Title = "Spawn" }, Value = "Spawn" })	-- Adds a selectable option (single-select flows)
+picker:AddButton({ ... })											-- Adds a nested action/toggle button (multi flows)
+picker:AddSlider({ ... })											-- Adds a nested slider
+picker:AddTextBox({ ... })											-- Adds a nested text input
+picker:AddLabel("Section header")									-- Adds a nested static label
+
+local current = picker:GetValue()			-- Returns the currently selected value
+picker:SetValue("Vault")					-- Programmatically sets the selected value
+picker:UpdateSummary("2 selected")			-- Appends custom summary text after the title
+```
+
+<Note>
+	`AddOption` is the recommended entry point for single-select dropdowns and also works for `SingleSelect = false` flows. `AddButton`, `AddSlider`, `AddTextBox`, and `AddLabel` are lower-level builders primarily intended for constructing nested sub-menus (as shown above), and mirror the config shape of their standalone `tab:Add...` counterparts.
+</Note>

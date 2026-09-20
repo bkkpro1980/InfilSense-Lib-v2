@@ -1,0 +1,58 @@
+---
+title: "Quickstart"
+description: "Get up and running with InfilSense UI Library v2 in under five minutes."
+---
+
+## Installation
+
+Load the compiled bundle directly using `loadstring`:
+
+```lua
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bkkpro1980/InfilSense-Lib-v2/refs/heads/main/build/build.lua"))()
+```
+
+## Basic Setup
+
+Initialize an application instance and create your first draggable window tab:
+
+```lua
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bkkpro1980/InfilSense-Lib-v2/refs/heads/main/build/build.lua"))()
+
+-- 1. Initialize the library
+local app = Library.new({
+	Name = "My Script",
+	SaveFolder = "MyConfigs",
+	SaveId = "default"
+})
+
+-- 2. Create a tab (spawns minimized, stacks automatically)
+local mainTab = app:CreateTab("Main")
+
+-- 3. Add components
+mainTab:AddButton({
+	Info = {
+		Title = "Speed Boost",
+		Description = "Increases movement speed to 50."
+	},
+	InternalInfo = {
+		Toggle = true,
+		UniqueCommandId = "speed_boost_toggle",
+		Aliases = { "speed", "boost" }
+	},
+	Callback = function(enabled)
+		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.WalkSpeed = enabled and 50 or 16
+		end
+	end
+})
+```
+
+<CardGroup cols={2}>
+	<Card title="Application API" icon="cube" href="/api-reference/app">
+		Learn how to configure the root application, manage tabs, and toggle visibility.
+	</Card>
+	<Card title="Quick Commands" icon="terminal" href="/features/quick-commands">
+		Explore the built-in search palette, aliases, and argument system.
+	</Card>
+</CardGroup>

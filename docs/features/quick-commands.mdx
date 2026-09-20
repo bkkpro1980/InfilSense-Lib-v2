@@ -1,0 +1,40 @@
+---
+title: "Quick Commands"
+description: "Keyboard-driven command palette for running actions, toggles, and sliders."
+---
+
+Press **`F2`** (or your custom bound key) to toggle the Quick Commands palette.
+
+## Core Capabilities
+
+- **Key Release Trigger**: Binds to key release (`InputEnded`) so keys like `'` or `;` never leak characters into the typing bar.
+- **Priority Matching**: Matches against command titles and aliases with priority ordering:
+	1. **Exact Match**: `tk` selects `tele` instead of partial match `tkf`.
+	2. **Prefix Match**: Matches items starting with the query string.
+	3. **Substring Match**: Matches any command containing the query string.
+- **Direct Arguments**: Pass arguments separated by spaces:
+	- `ws 120` &rarr; Sets WalkSpeed slider to 120.
+	- `noclip on` &rarr; Toggles noclip on.
+	- `preset sky` &rarr; Selects the `Sky` dropdown option.
+- **Tab Auto-Complete**: Displays a light-gray auto-complete ghost preview. Pressing `Tab` fills in the command title or alias.
+- **Enter Execution**: Pressing `Enter` runs the top highlighted command and closes the search overlay.
+
+## Registering Aliases
+
+Add an `Aliases` table to any component configuration:
+
+```lua
+tab:AddSlider({
+	Info = { Title = "Field of View" },
+	InternalInfo = {
+		UniqueCommandId = "fov_slider",
+		Aliases = { "fov", "camfov" }
+	},
+	Min = 70,
+	Max = 120,
+	Default = 70,
+	Callback = function(val)
+		workspace.CurrentCamera.FieldOfView = val
+	end
+})
+```

@@ -1,0 +1,84 @@
+---
+title: "Application API"
+description: "Constructor and methods for managing the root library instance."
+---
+
+## Constructor
+
+### `Library.new(config)`
+
+Creates the root `ScreenGui` (with `DisplayOrder = 2147483647`), loads saved configurations, initializes the Quick Commands palette, and creates the default Settings tab.
+
+```lua
+local app = Library.new({
+	Name = "Universal Utility",
+	SaveFolder = "Configs",
+	SaveId = "settings"
+})
+```
+
+#### Parameters
+
+<ParamField path="Name" type="string" default="Unnamed">
+	Title displayed on top-level headers and log messages.
+</ParamField>
+
+<ParamField path="SaveFolder" type="string" default='""'>
+	Folder name inside executor storage where JSON configuration files are saved.
+</ParamField>
+
+<ParamField path="SaveId" type="string" default="config">
+	Base name for the JSON configuration file (omitting `.json`).
+</ParamField>
+
+---
+
+## Methods
+
+### `app:CreateTab(name, defaultPosition)`
+
+Creates a draggable window tab. If coordinates already exist in the configuration file, they will be loaded automatically. Otherwise, the tab spawns minimized in a vertical stack below the Roblox top bar.
+
+```lua
+local tab = app:CreateTab("Combat")
+```
+
+<ParamField path="name" type="string" required>
+	The title text displayed on the tab header.
+</ParamField>
+
+<ParamField path="defaultPosition" type="UDim2" optional>
+	Optional default position override. If omitted, the tab automatically stacks vertically on the left.
+</ParamField>
+
+---
+
+### `app:GetTab(name)`
+
+Returns an existing `Tab` object by its title name. Ideal for accessing the built-in `"Settings"` tab.
+
+```lua
+local settingsTab = app:GetTab("Settings")
+if settingsTab then
+	settingsTab:AddLabel("Version 2.0.0")
+end
+```
+
+---
+
+### `app:ToggleGui(forcedState)`
+
+Toggles or directly sets the visibility of all draggable tabs. The Quick Commands search overlay remains operational even when tabs are hidden.
+
+```lua
+app:ToggleGui()			-- Inverts visibility
+app:ToggleGui(false)	-- Hides tabs
+```
+
+<ParamField path="forcedState" type="boolean" optional>
+	When provided, sets visibility explicitly (`true` to show, `false` to hide) instead of toggling.
+</ParamField>
+
+<Note>
+	Tabs are also toggled by a global keybind — **Right Shift** by default — configurable from the auto-created **Settings** tab. This is separate from the Quick Commands keybind (`F2` by default).
+</Note>

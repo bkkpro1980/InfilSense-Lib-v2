@@ -1,0 +1,26 @@
+---
+title: "Grid Snapping & Bounds"
+description: "Magnetic window positioning and responsive screen boundary detection."
+---
+
+## Magnetic Grid Snapping
+
+Tabs utilize a native `UIDragDetector` constraint function. As you drag a tab across the screen, it snaps in real-time to the nearest grid increment (default: **15px**).
+
+When you release the drag, the tab locks into position and automatically saves its coordinates to the configuration file on disk.
+
+### Configuring the Grid
+
+Users can adjust or disable grid snapping at any time in the auto-created **Settings** tab:
+- **Grid Snapping Toggle**: Enables or disables magnetic constraint snapping.
+- **Grid Snap Size Slider**: Adjusts the grid step between 5px and 30px.
+
+---
+
+## Screen Bounds & Inset Protection
+
+Tabs remain locked to absolute pixel offsets without distortion when resizing the Roblox client:
+- **Roblox Topbar Inset**: Tabs automatically offset below the Roblox Topbar using `GuiService:GetGuiInset().Y`.
+- **Window Resize Clamping**: When the client window is resized smaller, tabs clamp within the viewport to prevent getting lost off-screen.
+- **Flyout Flipping**: When a tab is positioned close to the right edge of the screen, its `moreScroll` dropdown automatically flips to the left.
+- **Tooltip Flipping**: Tooltips flip horizontally or vertically when hovering near screen borders.
