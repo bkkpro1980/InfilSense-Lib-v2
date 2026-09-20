@@ -172,37 +172,68 @@ function Selection.create(tabObj, config, parentOverride)
         end)
     end
 
+    -- Smart Argument Slicer for Quick Commands
     State.registerCommand({
         id = commandId,
         title = info.Title or "Selection",
         aliases = aliases,
         description = info.Description or "",
         type = "Selection",
-        usage = "<option>",
+        usage = "<option> [args...]",
         execute = function(args)
+            local function fireSel(val, ...)
+                if isSingleSelect then
+                    State.values[commandId] = val
+                    updateSelectionVisuals()
+                end
+                -- Pass the selection option, PLUS all leftover arguments!
+                if callback then callback(val, ...) end
+            end
+
             if #args > 0 then
-                local query = table.concat(args, " "):lower()
-                for _, opt in ipairs(childOptions) do
-                    local optVal = tostring(opt.val or "")
-                    local optTitle = tostring(opt.cfg and opt.cfg.Info and opt.cfg.Info.Title or "")
-                    if optVal:lower():find(query, 1, true) or optTitle:lower():find(query, 1, true) then
-                        if isSingleSelect then
-                            State.values[commandId] = opt.val
-                            updateSelectionVisuals()
-                            if opt.cfg and opt.cfg.Callback then
-                                opt.cfg.Callback(true)
-                            elseif callback then
-                                callback(opt.val)
-                            end
-                        else
-                            if opt.cfg and opt.cfg.Callback then
-                                opt.cfg.Callback(true)
-                            end
+                -- 1. Try Exact Match First (handles multi-word options like "spawn point")
+                for i = #args, 1, -1 do
+                    local query = table.concat(args, " ", 1, i):lower()
+                    for _, opt in ipairs(childOptions) do
+                        local optVal = tostring(opt.val or "")
+                        local optTitle = tostring(opt.cfg and opt.cfg.Info and opt.cfg.Info.Title or "")
+                        if optVal:lower() == query or optTitle:lower() == query then
+                            fireSel(opt.val, unpack(args, i + 1))
+                            return
                         end
-                        return
                     end
                 end
+
+                -- 2. Try Prefix Match
+                for i = #args, 1, -1 do
+                    local query = table.concat(args, " ", 1, i):lower()
+                    for _, opt in ipairs(childOptions) do
+                        local optVal = tostring(opt.val or "")
+                        local optTitle = tostring(opt.cfg and opt.cfg.Info and opt.cfg.Info.Title or "")
+                        if optVal:lower():sub(1, #query) == query or optTitle:lower():sub(1, #query) == query then
+                            fireSel(opt.val, unpack(args, i + 1))
+                            return
+                        end
+                    end
+                end
+
+                -- 3. Try Substring Match
+                for i = #args, 1, -1 do
+                    local query = table.concat(args, " ", 1, i):lower()
+                    for _, opt in ipairs(childOptions) do
+                        local optVal = tostring(opt.val or "")
+                        local optTitle = tostring(opt.cfg and opt.cfg.Info and opt.cfg.Info.Title or "")
+                        if optVal:lower():find(query, 1, true) or optTitle:lower():find(query, 1, true) then
+                            fireSel(opt.val, unpack(args, i + 1))
+                            return
+                        end
+                    end
+                end
+
+                -- 4. V1 Fallback: No UI options matched! Pass raw strings directly to script callback!
+                fireSel(args[1], unpack(args, 2))
             else
+                -- No arguments given: Cycle through the available options
                 if isSingleSelect and #childOptions > 0 then
                     local currentIdx = 1
                     for idx, opt in ipairs(childOptions) do
@@ -214,13 +245,7 @@ function Selection.create(tabObj, config, parentOverride)
                     local nextIdx = (currentIdx % #childOptions) + 1
                     local nextOpt = childOptions[nextIdx]
                     if nextOpt then
-                        State.values[commandId] = nextOpt.val
-                        updateSelectionVisuals()
-                        if nextOpt.cfg and nextOpt.cfg.Callback then
-                            nextOpt.cfg.Callback(true)
-                        elseif callback then
-                            callback(nextOpt.val)
-                        end
+                        fireSel(nextOpt.val)
                     end
                 end
             end

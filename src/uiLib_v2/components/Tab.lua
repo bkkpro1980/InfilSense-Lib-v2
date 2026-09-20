@@ -136,7 +136,12 @@ function Tab.create(tabName, defaultPosition)
         end)
     end
 
+    local savedStates = ConfigManager.get("TabStates") or {}
     local isMinimized = true
+    if savedStates[tabName] ~= nil then
+        isMinimized = savedStates[tabName]
+    end
+
     local isAnimating = false
 
     local openMin = UIBuilder.create("ImageButton", {
@@ -242,6 +247,8 @@ function Tab.create(tabName, defaultPosition)
         isAnimating = true
         tab.ZIndex = State.getHighestZ() + 1
         isMinimized = not isMinimized
+
+        ConfigManager.set(tabName, isMinimized, "TabStates")
 
         if isMinimized then
             closeMore()

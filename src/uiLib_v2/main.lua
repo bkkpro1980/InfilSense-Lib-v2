@@ -333,6 +333,7 @@ function Library.new(config)
         },
         Callback = function()
             ConfigManager.set("TabPositions", {})
+            ConfigManager.set("TabStates", {})
             local topInset = GuiService:GetGuiInset().Y
             for index, tabName in ipairs(State.tabOrder) do
                 local tabData = State.tabs[tabName]

@@ -18,6 +18,7 @@ function ConfigManager.getDefault()
             GridSize = 15
         }, 
         TabPositions = {},
+        TabStates = {},
         MenuToggle = "RightShift",
         QuickCommandsToggle = "F2"
     }
