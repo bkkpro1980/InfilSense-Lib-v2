@@ -1,0 +1,160 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'bundler.py'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Download the repository onto the GitHub runner
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      # 2. Install Python
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      # 3. Run the bundler
+      - name: Run Bundler
+        run: python bundler.py
+
+      # 4. Make sure the bundler actually produced the expected file
+      - name: Verify Build
+        run: |
+          if [[ ! -f "build/build.lua" ]]; then
+            echo "ERROR: build/build.lua was not created."
+            exit 1
+          fi
+
+          echo "Build successful:"
+          ls -lh build/build.lua
+
+      # 5. Get the version from the first line of the commit message
+      #    and everything after it becomes the release notes.
+      - name: Get Version and Release Notes
+        id: version
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          # First line = version
+          VERSION=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
+
+          echo "Version: $VERSION"
+
+          # Validate Semantic Versioning.
+          #
+          # Valid examples:
+          #   2.0.0
+          #   2.0.0-alpha
+          #   2.0.0-beta.1
+          #   2.0.0-rc.1
+          #   2.0.0+build.123
+          #
+          # Invalid examples:
+          #   2.0
+          #   v2.0.0
+          #   2.0
+          #   version 2.0.0
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+            echo "ERROR: '$VERSION' is not a valid Semantic Version."
+            echo ""
+            echo "Expected format:"
+            echo "  MAJOR.MINOR.PATCH"
+            echo ""
+            echo "Examples:"
+            echo "  2.0.0"
+            echo "  2.0.0-alpha"
+            echo "  2.0.0-beta.1"
+            echo "  2.0.0-rc.1"
+            exit 1
+          fi
+
+          # Everything after the first line becomes the release notes.
+          printf '%s\n' "$COMMIT_MESSAGE" | sed '1d' > release-notes.md
+
+          echo ""
+          echo "Release notes:"
+          echo "---------------"
+
+          if [[ -s "release-notes.md" ]]; then
+            cat release-notes.md
+          else
+            echo "(No release notes provided.)"
+          fi
+
+          # A '-' in the version means this is a SemVer prerelease.
+          #
+          # 2.0.0       -> stable
+          # 2.0.0-alpha -> prerelease
+          # 2.0.0-beta  -> prerelease
+          # 2.0.0-rc.1  -> prerelease
+          if [[ "$VERSION" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo ""
+            echo "Release type: PRE-RELEASE"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo ""
+            echo "Release type: STABLE"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # 6. Make sure we aren't accidentally trying to overwrite
+      #    an existing release.
+      - name: Check Release Does Not Already Exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$VERSION" > /dev/null 2>&1; then
+            echo "ERROR: Release $VERSION already exists."
+            echo ""
+            echo "Please use a new version number."
+            exit 1
+          fi
+
+          echo "No existing release found for $VERSION."
+
+      # 7. Create the GitHub release and upload build.lua
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMIT_SHA: ${{ github.sha }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          if [[ "$PRERELEASE" == "true" ]]; then
+            echo "Creating pre-release $VERSION..."
+
+            gh release create "$VERSION" \
+              build/build.lua \
+              --title "$VERSION" \
+              --notes-file release-notes.md \
+              --target "$COMMIT_SHA" \
+              --prerelease
+          else
+            echo "Creating stable release $VERSION..."
+
+            gh release create "$VERSION" \
+              build/build.lua \
+              --title "$VERSION" \
+              --notes-file release-notes.md \
+              --target "$COMMIT_SHA" \
+              --latest
+          fi
+
+          echo ""
+          echo "Release $VERSION created successfully!"

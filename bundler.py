@@ -7,26 +7,29 @@ OUTPUT_FILE_PATH = "build/build.lua"
 
 REQUIRE_REGEX = re.compile(r"require\(\s*([^)]+?)\s*\)")
 
+
 def resolve_module_call(match, current_rel_path: str) -> str:
     expression = match.group(1).strip()
     parts = expression.split(".")
-    
-    # Check if this is a Roblox script-hierarchy require (e.g., script.Parent.state)
+
+    # Check if this is a Roblox script-hierarchy require
+    # e.g. script.Parent.state
     if parts and parts[0] == "script":
         path_segments = current_rel_path.split("/")
-        
+
         for part in parts[1:]:
             if part == "Parent":
                 if path_segments:
                     path_segments.pop()
             else:
                 path_segments.append(part)
-                
+
         resolved_path = "/".join(path_segments)
         return f'__REQUIRE("{resolved_path}")'
-    
+
     # Return untouched if it doesn't start with 'script'
     return match.group(0)
+
 
 def main():
     print("Starting")
@@ -44,17 +47,20 @@ def main():
 
     # Recursively collect and process all .lua files
     for file_path in sorted(src_dir.rglob("*.lua")):
-        # Calculate relative path without extension (e.g. 'components/Button')
+        # Calculate relative path without extension
+        # Example: components/Button
         rel_path = file_path.relative_to(src_dir).with_suffix("").as_posix()
-        
+
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Transform require(script.Parent...) into __REQUIRE("...")
+        # Transform require(script.Parent...)
+        # into __REQUIRE("...")
         bundled_content = REQUIRE_REGEX.sub(
             lambda match: resolve_module_call(match, rel_path),
             content
         )
+
         modules[rel_path] = bundled_content
 
     # Construct the final bundle template
@@ -77,23 +83,45 @@ def main():
         "",
     ]
 
+    # Add every module to the bundle
     for mod_id, code in modules.items():
-        bundle_lines.append(f'__MODULES["{mod_id}"] = function()')
-        # bundle_lines.append(f'    local script = {{ Name = "{mod_id}" }}')
+        bundle_lines.append(
+            f'__MODULES["{mod_id}"] = function()'
+        )
+
         # Indent module contents for cleanliness
-        indented_code = "\n".join(f"    {line}" if line.strip() else "" for line in code.splitlines())
+        indented_code = "\n".join(
+            f"    {line}" if line.strip() else ""
+            for line in code.splitlines()
+        )
+
         bundle_lines.append(indented_code)
         bundle_lines.append("end\n")
 
+    # Entry point
     bundle_lines.append('return __REQUIRE("main")\n')
 
+    # Create output directory if it doesn't exist.
+    # This is important for GitHub Actions because the
+    # build/ directory is probably ignored by .gitignore.
     output_path = root_dir / OUTPUT_FILE_PATH
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Generate the final bundle
+    bundle_content = "\n".join(bundle_lines)
+
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(bundle_lines))
+        f.write(bundle_content)
 
-    print(f"Bundled {len(modules)} modules into '{OUTPUT_FILE_PATH}' successfully!")
+    # Calculate actual generated bundle size
+    bundle_size = len(bundle_content.encode("utf-8"))
 
-    print(f"Size: {len(content):,} bytes")
+    print(
+        f"Bundled {len(modules)} modules into "
+        f"'{OUTPUT_FILE_PATH}' successfully!"
+    )
+    print(f"Size: {bundle_size:,} bytes")
+
 
 if __name__ == "__main__":
     main()

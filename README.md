@@ -5,7 +5,7 @@ A modern, modular, high-performance floating UI library for Roblox with integrat
 ## Installation
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bkkpro1980/InfilSense-Lib-v2/refs/heads/main/build/build.lua"))()
+local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
 ```
 
 ## Features
@@ -31,7 +31,7 @@ Documentation can be found [here](https://docs.infilsense.dpdns.org).
 ## Quick Start
 
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bkkpro1980/InfilSense-Lib-v2/refs/heads/main/build/build.lua"))()
+local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
 
 local app = Library.new({
     Name = "My Script",

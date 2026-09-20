@@ -16,11 +16,15 @@ local State = {
     menuToggleKeybind = nil,
     quickCommandsKeybind = nil,
     
+    -- Command Registry for OG Quick Commands
     commands = {},
+    commandOrder = {}, -- Preserves exact registration order for exporting!
     
+    -- Callbacks
     toggleTabs = nil,
     toggleQuickCommands = nil,
     
+    -- Tooltip system
     tooltipGui = nil,
     hoveredTooltipText = nil,
 }
@@ -34,6 +38,9 @@ function State.setValue(commandId, value)
 end
 
 function State.registerCommand(data)
+    if not State.commands[data.id] then
+        table.insert(State.commandOrder, data.id)
+    end
     State.commands[data.id] = data
 end
 

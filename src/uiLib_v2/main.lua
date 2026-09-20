@@ -153,6 +153,57 @@ function Library.new(config)
         State.toggleTabs(forcedState)
     end
 
+    function app:ExportQuickCommandsList()
+        print("\n[" .. State.libName .. "]: ---------- COMMANDS LIST OUTPUT START ----------\n")
+
+        local output = {}
+        for _, cmdId in ipairs(State.commandOrder) do
+            local cmdData = State.commands[cmdId]
+            if cmdData then
+                local allKeys = { cmdData.title }
+                if cmdData.aliases and #cmdData.aliases > 0 then
+                    for _, alias in ipairs(cmdData.aliases) do
+                        table.insert(allKeys, alias)
+                    end
+                end
+
+                local line = string.format("%s (%s): %s", cmdData.title, cmdId, table.concat(allKeys, ", "))
+                if cmdData.usage and cmdData.usage ~= "" then
+                    line = line .. " | Usage: " .. cmdData.usage
+                end
+                print("[" .. State.libName .. "]: " .. line)
+                table.insert(output, line)
+            end
+        end
+
+        if #output > 0 then
+            local baseFolder = State.saveFolder ~= "" and (State.saveFolder .. "/") or ""
+            local commandIdsFolder = baseFolder .. "commandIds"
+
+            if type(isfolder) == "function" and type(makefolder) == "function" then
+                if State.saveFolder ~= "" and not isfolder(State.saveFolder) then
+                    pcall(makefolder, State.saveFolder)
+                end
+                if not isfolder(commandIdsFolder) then
+                    pcall(makefolder, commandIdsFolder)
+                end
+            end
+
+            if type(writefile) == "function" then
+                local filePath = commandIdsFolder .. "/" .. State.saveFileName .. ".txt"
+                local success = pcall(writefile, filePath, table.concat(output, "\n"))
+                if success then
+                    print("\n[" .. State.libName .. "]: File successfully written to: " .. filePath)
+                end
+            end
+        else
+            print("[" .. State.libName .. "]: No quick commands found.")
+        end
+
+        print("\n[" .. State.libName .. "]: ---------- COMMANDS LIST OUTPUT END ----------\n")
+        return output
+    end
+
     -- make built in settings
     local settingsTab = app:CreateTab("Settings")
 
@@ -293,6 +344,17 @@ function Library.new(config)
                     }):Play()
                 end
             end
+        end
+    })
+
+    -- export quick cmds
+    settingsTab:AddButton({
+        Info = {
+            Title = "Export Quick Commands",
+            Description = "Dumps all commands to the console and writes to commandIds/ folder."
+        },
+        Callback = function()
+            app:ExportQuickCommandsList()
         end
     })
 
