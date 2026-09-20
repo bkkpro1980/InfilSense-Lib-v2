@@ -1255,16 +1255,42 @@ __MODULES["components/Tab"] = function()
     local TS = game:GetService("TweenService")
     local GuiService = game:GetService("GuiService")
 
-    local function getViewport()
-        local camera = workspace.CurrentCamera
-        return (camera and camera.ViewportSize) or Vector2.new(1280, 720)
+    local function getRealScreenPos(guiObject)
+        local topLeftInset = GuiService:GetGuiInset()
+        return Vector2.new(
+            guiObject.AbsolutePosition.X + topLeftInset.X,
+            guiObject.AbsolutePosition.Y + topLeftInset.Y
+        )
+    end
+
+    local function getScreenBounds()
+        local mainGui = State.mainGui
+        local screenW = 1280
+        local screenH = 720
+
+        if mainGui and mainGui.AbsoluteSize.X > 0 and mainGui.AbsoluteSize.Y > 0 then
+            screenW = mainGui.AbsoluteSize.X
+            screenH = mainGui.AbsoluteSize.Y
+        else
+            local camera = workspace.CurrentCamera
+            if camera and camera.ViewportSize.X > 0 then
+                screenW = camera.ViewportSize.X
+                screenH = camera.ViewportSize.Y
+            end
+        end
+
+        local topLeftInset, bottomRightInset = GuiService:GetGuiInset()
+        local topSafe = topLeftInset.Y + 8
+        -- 20px padding above bottom edge
+        local bottomSafe = screenH - bottomRightInset.Y - 20
+
+        return screenW, screenH, topSafe, bottomSafe
     end
 
     local function clampPosition(pos)
-        local vp = getViewport()
-        local topInset = GuiService:GetGuiInset().Y
-        local x = math.clamp(pos.X.Offset, 10, math.max(10, vp.X - 210))
-        local y = math.clamp(pos.Y.Offset, topInset + 5, math.max(topInset + 5, vp.Y - 25))
+        local screenW, _, topSafe, bottomSafe = getScreenBounds()
+        local x = math.clamp(pos.X.Offset, 10, math.max(10, screenW - 215))
+        local y = math.clamp(pos.Y.Offset, topSafe, math.max(topSafe, bottomSafe - 50))
         return UDim2.new(0, x, 0, y)
     end
 
@@ -1278,20 +1304,20 @@ __MODULES["components/Tab"] = function()
             table.insert(State.tabOrder, tabName)
         end
 
-        local topInset = GuiService:GetGuiInset().Y
+        local _, _, topSafe = getScreenBounds()
         local savedPositions = ConfigManager.get("TabPositions") or {}
         local savedPos = savedPositions[tabName]
 
         local initialPosition
         if savedPos and savedPos.X and savedPos.Y then
-            local vp = getViewport()
-            local x = (savedPos.X[1] * vp.X) + savedPos.X[2]
-            local y = (savedPos.Y[1] * vp.Y) + savedPos.Y[2]
+            local screenW, screenH = getScreenBounds()
+            local x = (savedPos.X[1] * screenW) + savedPos.X[2]
+            local y = (savedPos.Y[1] * screenH) + savedPos.Y[2]
             initialPosition = clampPosition(UDim2.new(0, math.round(x), 0, math.round(y)))
         elseif defaultPosition then
             initialPosition = clampPosition(defaultPosition)
         else
-            local yOffset = topInset + 10 + ((State.tabCount - 1) * 26)
+            local yOffset = topSafe + ((State.tabCount - 1) * 26)
             initialPosition = clampPosition(UDim2.new(0, 15, 0, yOffset))
         end
 
@@ -1418,9 +1444,10 @@ __MODULES["components/Tab"] = function()
             local function refresh()
                 if isMinimized or isAnimating then return end
                 local desired = math.max(minHeight or 20, listLayout.AbsoluteContentSize.Y)
-                local vp = getViewport()
-                local maxHeight = math.max(minHeight or 20, vp.Y - scrollingFrame.AbsolutePosition.Y - 40)
-                local clamped = math.min(desired, maxHeight)
+                local _, _, _, bottomSafe = getScreenBounds()
+                local realTopY = getRealScreenPos(scrollingFrame).Y
+                local availableHeight = math.max(minHeight or 20, bottomSafe - realTopY)
+                local clamped = math.min(desired, availableHeight)
                 scrollingFrame.Size = UDim2.new(scrollingFrame.Size.X.Scale, scrollingFrame.Size.X.Offset, 0, clamped)
             end
 
@@ -1453,9 +1480,10 @@ __MODULES["components/Tab"] = function()
 
         local function calculateTargetHeight()
             local desired = math.max(20, scrollList.AbsoluteContentSize.Y)
-            local vp = getViewport()
-            local maxHeight = math.max(20, vp.Y - tab.AbsolutePosition.Y - 80)
-            return math.min(desired, maxHeight)
+            local _, _, _, bottomSafe = getScreenBounds()
+            local realScrollTopY = getRealScreenPos(tab).Y + 20
+            local availableHeight = math.max(20, bottomSafe - realScrollTopY)
+            return math.min(desired, availableHeight)
         end
 
         openMin.Activated:Connect(function()
@@ -1522,6 +1550,11 @@ __MODULES["components/Tab"] = function()
         function tabObj:AddInput(config, pOverride) return __REQUIRE("components/Input").create(self, config, pOverride) end
         function tabObj:AddTextBox(config, pOverride) return self:AddInput(config, pOverride) end
         function tabObj:AddTextbox(config, pOverride) return self:AddInput(config, pOverride) end
+        function tabObj:AddToggleInput(config, pOverride)
+            config = config or {}
+            config.Toggle = true
+            return self:AddInput(config, pOverride)
+        end
         function tabObj:AddSelection(config, pOverride) return __REQUIRE("components/Selection").create(self, config, pOverride) end
         function tabObj:AddSlider(config, pOverride) return __REQUIRE("components/Slider").create(self, config, pOverride) end
         function tabObj:AddLabel(config, pOverride) return __REQUIRE("components/Label").create(self, config, pOverride) end
@@ -1548,27 +1581,49 @@ __MODULES["components/Tab"] = function()
             moreBlocker.Visible = true
             moreScroll.Visible = true
 
-            -- screen bounds checka
-            local vp = getViewport()
-            local tabX = tab.AbsolutePosition.X
-            local moreWidth = 200
-            local hasRightRoom = (tabX + 200 + moreWidth + 10 <= vp.X)
-            local hasLeftRoom = (tabX >= moreWidth + 10)
-            local placeOnLeft = not hasRightRoom and hasLeftRoom
+            local screenW, _, topSafe, bottomSafe = getScreenBounds()
+            local realTabPos = getRealScreenPos(tab)
+            local realSourcePos = getRealScreenPos(sourceFrame)
 
+            local moreWidth = 200
+            -- flip
+            local hasRightRoom = (realTabPos.X + 200 + moreWidth + 10 <= screenW)
+            local hasLeftRoom = (realTabPos.X >= moreWidth + 10)
+            local placeOnLeft = not hasRightRoom and hasLeftRoom
             local xOffset = placeOnLeft and (-moreWidth - 4) or 204
 
-            local sourceY = sourceFrame.AbsolutePosition.Y
-            local relativeY = sourceY - tab.AbsolutePosition.Y
-            local approxHeight = 150
-            local overflowY = (sourceY + approxHeight) - (vp.Y - 20)
-            if overflowY > 0 then
-                relativeY = math.max(0, relativeY - overflowY)
+            populateFunc(moreScroll)
+
+            local childCount = 0
+            for _, c in ipairs(moreScroll:GetChildren()) do
+                if c:IsA("Frame") or (c:IsA("GuiObject") and c.Name ~= "moreList") then
+                    childCount = childCount + 1
+                end
+            end
+            local estimatedHeight = math.max(30, childCount * 22)
+            local actualContentHeight = moreList.AbsoluteContentSize.Y
+            local desiredHeight = math.max(actualContentHeight, estimatedHeight)
+            local maxMoreAllowed = math.min(desiredHeight, 220)
+
+            local relativeY = realSourcePos.Y - realTabPos.Y
+            local projectedBottom = realSourcePos.Y + maxMoreAllowed
+
+            if projectedBottom > bottomSafe then
+                local overflow = projectedBottom - bottomSafe
+                relativeY = relativeY - overflow
+            end
+
+            if (realTabPos.Y + relativeY) < topSafe then
+                relativeY = topSafe - realTabPos.Y
             end
 
             moreScroll.Position = UDim2.new(0, xOffset, 0, relativeY)
 
-            populateFunc(moreScroll)
+            local finalTopY = realTabPos.Y + relativeY
+            local availableMoreHeight = math.max(20, bottomSafe - finalTopY)
+            local finalH = math.min(desiredHeight, availableMoreHeight)
+            moreScroll.Size = UDim2.new(0, moreWidth, 0, finalH)
+
             task.defer(refreshMoreSize)
             return true
         end
