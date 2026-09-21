@@ -13,6 +13,60 @@ local TS = game:GetService("TweenService")
 
 local COREGUI = cloneref and cloneref(game:GetService("CoreGui")) or game:GetService("CoreGui")
 
+-- theme presets
+Library.Themes = {
+	InfilSense = {
+		accent = Color3.fromRGB(70, 0, 180),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(15, 0, 40),
+		hover = Color3.fromRGB(10, 0, 30),
+		text = Color3.fromRGB(255, 255, 255),
+		inputBackground = Color3.fromRGB(30, 30, 30),
+		muted = Color3.fromRGB(125, 125, 125),
+		placeholder = Color3.fromRGB(175, 175, 175)
+	},
+	Midnight = {
+		accent = Color3.fromRGB(0, 170, 255),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(15, 20, 30),
+		hover = Color3.fromRGB(22, 30, 45),
+		text = Color3.fromRGB(220, 230, 245),
+		inputBackground = Color3.fromRGB(10, 14, 22),
+		muted = Color3.fromRGB(90, 110, 140),
+		placeholder = Color3.fromRGB(130, 150, 180)
+	},
+	Emerald = {
+		accent = Color3.fromRGB(40, 210, 110),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(20, 26, 22),
+		hover = Color3.fromRGB(28, 36, 30),
+		text = Color3.fromRGB(230, 245, 235),
+		inputBackground = Color3.fromRGB(14, 18, 15),
+		muted = Color3.fromRGB(95, 125, 105),
+		placeholder = Color3.fromRGB(140, 170, 150)
+	},
+	Crimson = {
+		accent = Color3.fromRGB(235, 45, 65),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(28, 18, 20),
+		hover = Color3.fromRGB(38, 24, 26),
+		text = Color3.fromRGB(250, 235, 238),
+		inputBackground = Color3.fromRGB(18, 12, 13),
+		muted = Color3.fromRGB(135, 85, 95),
+		placeholder = Color3.fromRGB(175, 120, 130)
+	},
+	Obsidian = {
+		accent = Color3.fromRGB(255, 255, 255),
+		tabHeading = Color3.fromRGB(20, 20, 20),
+		background = Color3.fromRGB(12, 12, 12),
+		hover = Color3.fromRGB(22, 22, 22),
+		text = Color3.fromRGB(240, 240, 240),
+		inputBackground = Color3.fromRGB(5, 5, 5),
+		muted = Color3.fromRGB(90, 90, 90),
+		placeholder = Color3.fromRGB(150, 150, 150)
+	}
+}
+
 function Library.new(config)
 	config = config or {}
 	State.libName = config.Name or "Unnamed"
@@ -46,7 +100,7 @@ function Library.new(config)
 	State.tooltipGui = UIBuilder.create("TextLabel", {
 		Name = "Tooltip",
 		Visible = false,
-		BackgroundColor3 = Constants.Colors.darkHover,
+		BackgroundColor3 = Constants.Colors.hover,
 		TextColor3 = Constants.Colors.text,
 		FontFace = Constants.Fonts.regular,
 		TextSize = 13,
@@ -63,7 +117,7 @@ function Library.new(config)
 
 	RunService.RenderStepped:Connect(function(dt)
 		if not State.tooltipGui then return end
-		
+
 		if State.hoveredTooltipText then
 			local currentPos = UIS:GetMouseLocation()
 			if (currentPos - lastMousePos).Magnitude > 2 then
@@ -135,40 +189,59 @@ function Library.new(config)
 		end
 	end
 
-	if config.AccentColor or config.Accent then
-		Constants.Colors.accent = config.AccentColor or config.Accent
-	end
-	if config.TextColor or config.Text then
-		Constants.Colors.text = config.TextColor or config.Text
-	end
+	local function applyThemeChannel(channel, color)
+		if typeof(color) ~= "Color3" then return end
+		channel = string.lower(channel)
 
-	local app = {}
-
-	-- yay theming
-	function app:SetAccentColor(color)
-		if typeof(color) == "Color3" then
+		if channel == "accent" or channel == "accentcolor" then
 			Constants.Colors.accent = color
 			State.updateTheme("accent", color)
-		end
-	end
-
-	function app:SetTextColor(color)
-		if typeof(color) == "Color3" then
+		elseif channel == "tabheading" or channel == "tabheadingcolor" or channel == "headertext" or channel == "tabtext" then
+			Constants.Colors.tabHeading = color
+			State.updateTheme("tabHeading", color)
+		elseif channel == "background" or channel == "backgroundcolor" or channel == "dark" then
+			Constants.Colors.background = color
+			State.updateTheme("background", color)
+		elseif channel == "hover" or channel == "hovercolor" or channel == "darkhover" then
+			Constants.Colors.hover = color
+			State.updateTheme("hover", color)
+		elseif channel == "text" or channel == "textcolor" then
 			Constants.Colors.text = color
 			State.updateTheme("text", color)
+		elseif channel == "inputbackground" or channel == "input" or channel == "inputbg" then
+			Constants.Colors.inputBackground = color
+			State.updateTheme("inputBackground", color)
+		elseif channel == "muted" or channel == "mutedcolor" or channel == "gray" then
+			Constants.Colors.muted = color
+			State.updateTheme("muted", color)
+		elseif channel == "placeholder" or channel == "placeholdercolor" or channel == "textplaceholder" then
+			Constants.Colors.placeholder = color
+			State.updateTheme("placeholder", color)
 		end
 	end
 
+	local initialTheme = config.Theme or {}
+	for key, color in pairs(initialTheme) do
+		applyThemeChannel(key, color)
+	end
+	
+	local app = {}
+
 	function app:SetTheme(themeTable)
-		if type(themeTable) == "table" then
-			if themeTable.Accent or themeTable.AccentColor then
-				self:SetAccentColor(themeTable.Accent or themeTable.AccentColor)
-			end
-			if themeTable.Text or themeTable.TextColor then
-				self:SetTextColor(themeTable.Text or themeTable.TextColor)
-			end
+		if type(themeTable) ~= "table" then return end
+		for key, color in pairs(themeTable) do
+			applyThemeChannel(key, color)
 		end
 	end
+
+	function app:SetAccentColor(color) applyThemeChannel("accent", color) end
+	function app:SetTabHeadingColor(color) applyThemeChannel("tabHeading", color) end
+	function app:SetBackgroundColor(color) applyThemeChannel("background", color) end
+	function app:SetHoverColor(color) applyThemeChannel("hover", color) end
+	function app:SetTextColor(color) applyThemeChannel("text", color) end
+	function app:SetInputBackgroundColor(color) applyThemeChannel("inputBackground", color) end
+	function app:SetMutedColor(color) applyThemeChannel("muted", color) end
+	function app:SetPlaceholderColor(color) applyThemeChannel("placeholder", color) end
 
 	function app:CreateTab(name, pos)
 		if State.tabs[name] and State.tabs[name].tabObj then
@@ -176,7 +249,7 @@ function Library.new(config)
 		end
 		return Tab.create(name, pos)
 	end
-	
+
 	function app:GetTab(name)
 		local tabData = State.tabs[name]
 		return tabData and tabData.tabObj or nil
@@ -242,9 +315,9 @@ function Library.new(config)
 
 	local currentMenuKeyName = ConfigManager.get().MenuToggle or "RightShift"
 	local menuKeyBtn = settingsTab:AddButton({
-		Info = { 
-			Title = "UI Visibility Keybind [" .. currentMenuKeyName .. "]", 
-			Description = "Click to rebind the key used to show/hide the UI tabs." 
+		Info = {
+			Title = "UI Visibility Keybind [" .. currentMenuKeyName .. "]",
+			Description = "Click to rebind the key used to show/hide the UI tabs."
 		},
 		Callback = function() end
 	})
@@ -283,9 +356,9 @@ function Library.new(config)
 	-- quick commands bind
 	local currentQCKeyName = ConfigManager.get().QuickCommandsToggle or "F2"
 	local qcKeyBtn = settingsTab:AddButton({
-		Info = { 
-			Title = "Quick Commands Keybind [" .. currentQCKeyName .. "]", 
-			Description = "Click to rebind the key used to open Quick Commands." 
+		Info = {
+			Title = "Quick Commands Keybind [" .. currentQCKeyName .. "]",
+			Description = "Click to rebind the key used to open Quick Commands."
 		},
 		Callback = function() end
 	})

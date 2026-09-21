@@ -30,12 +30,9 @@ The selected grid settings persist through the JSON configuration file.
 
 ## Screen bounds
 
-Tab placement is constrained so that headers remain reachable:
+Tab positions are clamped using the current viewport size. The tab header is **200 px** wide, so the X offset stays between `0` and `viewportWidth - 200`; the Y offset stays between `0` and `viewportHeight - 20`.
 
-- The Roblox GUI inset is included in the safe top boundary.
-- Horizontal placement is clamped inside the viewport.
-- A bottom safety margin is reserved.
-- Existing tabs are re-clamped when the viewport size changes.
+New tabs start at an X offset of **15 px** and at a Y position based on the GUI inset, with a minimum starting height of **40 px**. Existing tabs are re-clamped when the viewport size changes.
 
 ## Flyouts
 

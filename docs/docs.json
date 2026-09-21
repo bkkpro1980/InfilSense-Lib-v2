@@ -3,9 +3,12 @@
 	"theme": "mint",
 	"name": "InfilSense UI Library v2",
 	"colors": {
-		"primary": "#aa00ff",
+		"primary": "#4600b4",
 		"light": "#c266ff",
 		"dark": "#7a00b8"
+	},
+	"icons": {
+		"library": "lucide"
 	},
 	"navigation": {
 		"groups": [
@@ -18,7 +21,7 @@
 			},
 			{
 				"group": "API Reference",
-				"icon": "square-terminal",
+				"icon": "box",
 				"pages": [
 					"api-reference/app",
 					"api-reference/tab"
@@ -40,6 +43,7 @@
 				"icon": "sparkles",
 				"pages": [
 					"features/quick-commands",
+					"features/theming",
 					"features/grid-system",
 					"features/configuration"
 				]

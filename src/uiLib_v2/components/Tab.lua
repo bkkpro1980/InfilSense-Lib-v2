@@ -32,16 +32,15 @@ local function getScreenBounds()
 
 	local topLeftInset, bottomRightInset = GuiService:GetGuiInset()
 	local topSafe = topLeftInset.Y + 8
-	-- 20px padding above bottom edge
-	local bottomSafe = screenH - bottomRightInset.Y - 20
+	local bottomSafe = screenH - bottomRightInset.Y - 15
 
 	return screenW, screenH, topSafe, bottomSafe
 end
 
 local function clampPosition(pos)
-	local screenW, _, topSafe, bottomSafe = getScreenBounds()
-	local x = math.clamp(pos.X.Offset, 10, math.max(10, screenW - 215))
-	local y = math.clamp(pos.Y.Offset, topSafe, math.max(topSafe, bottomSafe - 50))
+	local screenW, screenH = getScreenBounds()
+	local x = math.clamp(pos.X.Offset, 0, math.max(0, screenW - 200))
+	local y = math.clamp(pos.Y.Offset, 0, math.max(0, screenH - 20))
 	return UDim2.new(0, x, 0, y)
 end
 
@@ -55,7 +54,6 @@ function Tab.create(tabName, defaultPosition)
 		table.insert(State.tabOrder, tabName)
 	end
 
-	local _, _, topSafe = getScreenBounds()
 	local savedPositions = ConfigManager.get("TabPositions") or {}
 	local savedPos = savedPositions[tabName]
 
@@ -68,14 +66,16 @@ function Tab.create(tabName, defaultPosition)
 	elseif defaultPosition then
 		initialPosition = clampPosition(defaultPosition)
 	else
-		local yOffset = topSafe + ((State.tabCount - 1) * 26)
+		local topLeftInset = GuiService:GetGuiInset()
+		local startY = math.max(40, topLeftInset.Y + 2)
+		local yOffset = startY + ((State.tabCount - 1) * 24)
 		initialPosition = clampPosition(UDim2.new(0, 15, 0, yOffset))
 	end
 
 	local tab = UIBuilder.create("TextLabel", {
 		Name = tabName,
 		Text = tabName,
-		TextColor3 = Constants.Colors.text,
+		TextColor3 = Constants.Colors.tabHeading,
 		BackgroundColor3 = Constants.Colors.accent,
 		BorderSizePixel = 0,
 		FontFace = Constants.Fonts.medium,
@@ -87,16 +87,6 @@ function Tab.create(tabName, defaultPosition)
 		Parent = State.tabsContainer
 	})
 
-	State.onThemeChanged(function(themeType, newColor)
-		if tab and tab.Parent then
-			if themeType == "accent" then
-				tab.BackgroundColor3 = newColor
-			elseif themeType == "text" then
-				tab.TextColor3 = newColor
-			end
-		end
-	end)
-
 	local drag = Instance.new("UIDragDetector")
 	drag.ResponseStyle = Enum.UIDragDetectorResponseStyle.Offset
 	drag.Parent = tab
@@ -104,13 +94,20 @@ function Tab.create(tabName, defaultPosition)
 	pcall(function()
 		drag:AddConstraintFunction(1, function(proposedMotion, proposedRotation)
 			local settings = ConfigManager.get("Settings") or {}
-			if settings.GridSnap == false then
-				return proposedMotion, proposedRotation
+			local finalX = proposedMotion.X.Offset
+			local finalY = proposedMotion.Y.Offset
+
+			if settings.GridSnap ~= false then
+				local gridSize = settings.GridSize or 15
+				finalX = snapValue(finalX, gridSize)
+				finalY = snapValue(finalY, gridSize)
 			end
-			local gridSize = settings.GridSize or 15
-			local snappedX = snapValue(proposedMotion.X.Offset, gridSize)
-			local snappedY = snapValue(proposedMotion.Y.Offset, gridSize)
-			return UDim2.new(0, snappedX, 0, snappedY), proposedRotation
+
+			local screenW, screenH = getScreenBounds()
+			finalX = math.clamp(finalX, 0, math.max(0, screenW - 200))
+			finalY = math.clamp(finalY, 0, math.max(0, screenH - 20))
+
+			return UDim2.new(0, finalX, 0, finalY), proposedRotation
 		end)
 	end)
 
@@ -172,8 +169,8 @@ function Tab.create(tabName, defaultPosition)
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.new(0, 0, 0, 20),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		CanvasSize = UDim2.new(0,0,0,0),
-		BackgroundColor3 = Constants.Colors.dark,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = tab
@@ -198,8 +195,8 @@ function Tab.create(tabName, defaultPosition)
 		Size = UDim2.new(1, 0, 0, 120),
 		Position = UDim2.new(1, 0, 0, 0),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		CanvasSize = UDim2.new(0,0,0,0),
-		BackgroundColor3 = Constants.Colors.dark,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = tab
@@ -237,7 +234,7 @@ function Tab.create(tabName, defaultPosition)
 			refreshScrollSize()
 		end)
 	end
-	
+
 	local currentOnClose = nil
 
 	local function closeMore()
@@ -307,6 +304,19 @@ function Tab.create(tabName, defaultPosition)
 		refreshMoreSize()
 	end)
 
+	State.onThemeChanged(function(themeType, newColor)
+		if tab and tab.Parent then
+			if themeType == "accent" then
+				tab.BackgroundColor3 = newColor
+			elseif themeType == "tabHeading" then
+				tab.TextColor3 = newColor
+			elseif themeType == "background" then
+				scroll.BackgroundColor3 = newColor
+				moreScroll.BackgroundColor3 = newColor
+			end
+		end
+	end)
+
 	local tabData = {
 		frame = tab,
 		scroll = scroll,
@@ -351,14 +361,13 @@ function Tab.create(tabName, defaultPosition)
 		moreBlocker.Visible = true
 		moreScroll.Visible = true
 
-		local screenW, _, topSafe, bottomSafe = getScreenBounds()
+		local screenW, _, _, bottomSafe = getScreenBounds()
 		local realTabPos = getRealScreenPos(tab)
 		local realSourcePos = getRealScreenPos(sourceFrame)
 
 		local moreWidth = 200
-		-- flip
-		local hasRightRoom = (realTabPos.X + 200 + moreWidth + 10 <= screenW)
-		local hasLeftRoom = (realTabPos.X >= moreWidth + 10)
+		local hasRightRoom = (realTabPos.X + 200 + moreWidth <= screenW)
+		local hasLeftRoom = (realTabPos.X >= moreWidth)
 		local placeOnLeft = not hasRightRoom and hasLeftRoom
 		local xOffset = placeOnLeft and (-moreWidth - 4) or 204
 
@@ -383,8 +392,8 @@ function Tab.create(tabName, defaultPosition)
 			relativeY = relativeY - overflow
 		end
 
-		if (realTabPos.Y + relativeY) < topSafe then
-			relativeY = topSafe - realTabPos.Y
+		if (realTabPos.Y + relativeY) < 0 then
+			relativeY = -realTabPos.Y
 		end
 
 		moreScroll.Position = UDim2.new(0, xOffset, 0, relativeY)

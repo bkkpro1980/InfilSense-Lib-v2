@@ -5,10 +5,6 @@ description: "Install InfilSense UI Library v2 and build a floating Roblox UI in
 
 InfilSense UI Library v2 is a floating Roblox UI library built around draggable, collapsible tabs. Components automatically integrate with Quick Commands, optional keybinds, tooltips, grid snapping, and persistent configuration.
 
-<Info>
-The documented API below describes the bundled `build/build.lua` release. When you ship a library update, regenerate the bundle before publishing the new release.
-</Info>
-
 ## 1. Install
 
 Load the bundled release directly:
@@ -35,17 +31,18 @@ local app = Library.new({
 })
 ```
 
-The defaults are:
+Common options are:
 
 | Option | Default | Purpose |
 | :--- | :--- | :--- |
 | `Name` | `"Unnamed"` | Library name used in state and console output. |
 | `SaveFolder` | `""` | Optional folder for the JSON config. |
 | `SaveId` | `"config"` | Config file name without `.json`. |
-| `AccentColor` | `Color3.fromRGB(0, 170, 255)` | Initial accent color. |
-| `TextColor` | `Color3.fromRGB(255, 255, 255)` | Initial text color. |
+| `Theme` | built-in InfilSense theme | Initial theme table. Pass `Library.Themes.<name>` or a custom table. |
+| `AccentColor` | InfilSense accent | Backward-compatible top-level accent override. |
+| `TextColor` | InfilSense text | Backward-compatible top-level text override. |
 
-`Accent` and `Text` are accepted as aliases for `AccentColor` and `TextColor`.
+The current default theme is `Library.Themes.InfilSense`. The top-level color settings remain supported for compatibility; the `Theme` table is the preferred API for new code.
 
 ## 3. Create a tab
 
@@ -120,7 +117,7 @@ local ui = Library.new({
 	Name = "Demo",
 	SaveFolder = "DemoConfig",
 	SaveId = "main",
-	AccentColor = Color3.fromRGB(0, 170, 255),
+	Theme = Library.Themes.Midnight,
 })
 
 local tab = ui:CreateTab("Demo")
@@ -181,18 +178,33 @@ target:AddOption({ Info = { Title = "Self" }, Value = "Self" })
 
 ## 6. Customize the theme
 
-Set colors when creating the application or change them later:
+The library exposes built-in presets through `Library.Themes`. Apply one when creating the application:
 
 ```lua
-app:SetTheme({
-	Accent = Color3.fromRGB(170, 0, 255),
-	Text = Color3.fromRGB(240, 240, 240),
+local app = Library.new({
+	Name = "My Script",
+	Theme = Library.Themes.Midnight,
 })
-
--- Individual updates are also available.
-app:SetAccentColor(Color3.fromRGB(0, 200, 255))
-app:SetTextColor(Color3.fromRGB(255, 255, 255))
 ```
+
+You can also provide a partial custom theme. Only the channels you include are changed:
+
+```lua
+local app = Library.new({
+	Name = "My Script",
+	Theme = {
+		accent = Color3.fromRGB(170, 0, 255),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(16, 16, 22),
+		text = Color3.fromRGB(240, 240, 240),
+		inputBackground = Color3.fromRGB(8, 8, 12),
+		muted = Color3.fromRGB(120, 120, 130),
+		placeholder = Color3.fromRGB(160, 160, 170),
+	},
+})
+```
+
+Themes can be changed after initialization with `app:SetTheme(...)` or one of the individual color setters. See [Theming](/features/theming) for the complete channel reference, presets, aliases, and runtime behavior.
 
 ## 7. Use Quick Commands
 
@@ -207,7 +219,7 @@ message hello from the command palette
 Press **Tab** to complete the top matching command and **Enter** to execute it.
 
 <CardGroup cols={2}>
-	<Card title="Application API" icon="cube" href="/api-reference/app">
+	<Card title="Application API" icon="box" href="/api-reference/app">
 		Configure the library, global visibility, themes, tabs, and command export.
 	</Card>
 	<Card title="Component API" icon="blocks" href="/api-reference/tab">
@@ -218,5 +230,8 @@ Press **Tab** to complete the top matching command and **Enter** to execute it.
 	</Card>
 	<Card title="Persistence" icon="folder" href="/features/configuration">
 		Understand saved config files, keybinds, tab state, and slider persistence.
+	</Card>
+	<Card title="Theming" icon="palette" href="/features/theming">
+		Use built-in palettes or customize the library's eight theme channels.
 	</Card>
 </CardGroup>

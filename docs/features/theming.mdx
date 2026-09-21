@@ -1,0 +1,96 @@
+---
+title: "Theming"
+description: "Customize InfilSense UI Library v2 with built-in palettes or your own color channels."
+---
+
+The v2 theme system lets you control the library palette as a group instead of editing individual UI elements. Themes can be selected during `Library.new()` or changed while the UI is running.
+
+## Use a preset
+
+The easiest option is to use one of the built-in presets:
+
+```lua
+local app = Library.new({
+	Name = "My Script",
+	Theme = Library.Themes.Midnight,
+})
+```
+
+Available presets:
+
+| Preset | Accent | Style |
+| :--- | :--- | :--- |
+| `InfilSense` | Purple | The default InfilSense palette. |
+| `Midnight` | Blue | Cool dark UI. |
+| `Emerald` | Green | Green-on-dark UI. |
+| `Crimson` | Red | Red-on-dark UI. |
+| `Obsidian` | White | Monochrome UI. |
+
+Preset tables can also be applied later:
+
+```lua
+app:SetTheme(Library.Themes.Crimson)
+```
+
+## Create a custom theme
+
+Theme tables are just Lua tables of `Color3` values. They may be partial:
+
+```lua
+local app = Library.new({
+	Theme = {
+		accent = Color3.fromRGB(170, 0, 255),
+		tabHeading = Color3.fromRGB(255, 255, 255),
+		background = Color3.fromRGB(18, 18, 24),
+		text = Color3.fromRGB(240, 240, 245),
+		inputBackground = Color3.fromRGB(8, 8, 12),
+		muted = Color3.fromRGB(115, 115, 125),
+		placeholder = Color3.fromRGB(155, 155, 165),
+	},
+})
+```
+
+Keys are matched case-insensitively. The canonical keys are: `accent`, `tabHeading`, `background`, `hover`, `text`, `inputBackground`, `muted`, and `placeholder`.
+
+## Channel reference
+
+| Channel | Aliases | Purpose |
+| :--- | :--- | :--- |
+| `accent` | `accentcolor` | Active toggles, gradients, tab headers, slider fill, opened selections, and highlighted Quick Command results. |
+| `tabHeading` | `tabheadingcolor`, `headertext`, `tabtext` | Tab header text. |
+| `background` | `backgroundcolor`, `dark` | Component rows, tab bodies, and related UI surfaces. Setting it also recalculates the default hover color. |
+| `hover` | `hovercolor`, `darkhover` | Tooltip/hover surface color. |
+| `text` | `textcolor` | Main text color. |
+| `inputBackground` | `input`, `inputbg` | Textbox background and slider track. |
+| `muted` | `mutedcolor`, `gray` | Inactive toggle indicators and selection chevrons. |
+| `placeholder` | `placeholdercolor`, `textplaceholder` | Placeholder/prompt text. |
+
+All theme values must be Roblox `Color3` values. Invalid values and unknown keys are ignored.
+
+## Runtime updates
+
+`SetTheme` only changes the channels you provide:
+
+```lua
+app:SetTheme({
+	accent = Color3.fromRGB(0, 200, 255),
+	text = Color3.fromRGB(255, 255, 255),
+})
+```
+
+Individual setters are available when you only want to change one channel:
+
+```lua
+app:SetAccentColor(Color3.fromRGB(255, 100, 200))
+app:SetTabHeadingColor(Color3.fromRGB(255, 255, 255))
+app:SetBackgroundColor(Color3.fromRGB(16, 16, 20))
+app:SetHoverColor(Color3.fromRGB(24, 24, 30))
+app:SetTextColor(Color3.fromRGB(235, 235, 240))
+app:SetInputBackgroundColor(Color3.fromRGB(8, 8, 12))
+app:SetMutedColor(Color3.fromRGB(100, 100, 110))
+app:SetPlaceholderColor(Color3.fromRGB(150, 150, 160))
+```
+
+## Themes are not persisted
+
+The configuration system saves tab positions, tab state, keybinds, startup flags, grid settings, and saved slider values. Theme colors are runtime configuration and are not written into the JSON config file.

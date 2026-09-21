@@ -1,21 +1,20 @@
 ---
 title: "Application API"
-description: "Create the root library instance and control global UI behavior."
+description: "Create the root library instance and control global UI behavior and theming."
 ---
 
 The application object returned by `Library.new()` is the entry point for the entire library.
 
 ## `Library.new(config)`
 
-Creates the root `ScreenGui`, loads configuration, initializes Quick Commands, and creates the built-in `Settings` tab.
+Creates the root `ScreenGui`, loads configuration, initializes Quick Commands, applies the initial theme, and creates the built-in `Settings` tab.
 
 ```lua
 local app = Library.new({
 	Name = "Universal Utility",
 	SaveFolder = "Configs",
 	SaveId = "settings",
-	AccentColor = Color3.fromRGB(70, 0, 180),
-	TextColor = Color3.fromRGB(255, 255, 255),
+	Theme = Library.Themes.Midnight,
 })
 ```
 
@@ -35,16 +34,81 @@ Folder used for the JSON configuration file. When empty, the config is stored as
 Base name for the JSON configuration file. The `.json` extension is added automatically.
 </ParamField>
 
+<ParamField path="config.Theme" type="table" optional>
+Initial theme. Use a table of supported theme channels or one of the built-in presets such as `Library.Themes.Midnight`. Theme values must be Roblox `Color3` values.
+</ParamField>
+
 <ParamField path="config.AccentColor" type="Color3" optional>
-Initial accent color. `Accent` is accepted as an alias.
+Backward-compatible top-level accent override. `Accent` is accepted as an alias.
+</ParamField>
+
+<ParamField path="config.TabHeadingColor" type="Color3" optional>
+Backward-compatible top-level tab heading color override. `TabHeading`, `HeaderText`, and the corresponding theme aliases are accepted.
+</ParamField>
+
+<ParamField path="config.BackgroundColor" type="Color3" optional>
+Backward-compatible top-level background override. `Background` is accepted as an alias.
 </ParamField>
 
 <ParamField path="config.TextColor" type="Color3" optional>
-Initial text color. `Text` is accepted as an alias.
+Backward-compatible top-level text override. `Text` is accepted as an alias.
+</ParamField>
+
+<ParamField path="config.InputColor" type="Color3" optional>
+Backward-compatible top-level input background override. `InputBackground` is accepted as an alias.
+</ParamField>
+
+<ParamField path="config.MutedColor" type="Color3" optional>
+Backward-compatible top-level muted color override. `Muted` is accepted as an alias.
 </ParamField>
 
 <Note>
+`Theme` is the preferred configuration surface for new code. Theme settings are applied at startup but are not written to the JSON persistence file.
+</Note>
+
+<Note>
 `Library.new()` also creates a tab named `Settings`. Calling `CreateTab("Settings")` later returns that existing tab.
+</Note>
+
+## `Library.Themes`
+
+`Library.Themes` contains the built-in theme presets:
+
+| Preset | Description |
+| :--- | :--- |
+| `InfilSense` | Purple InfilSense palette. This is the default theme. |
+| `Midnight` | Blue-on-dark palette. |
+| `Emerald` | Green-on-dark palette. |
+| `Crimson` | Red-on-dark palette. |
+| `Obsidian` | Monochrome black-and-white palette. |
+
+Presets are ordinary Lua tables, so you can pass them directly to `Theme` or `SetTheme`, or copy one and modify individual channels.
+
+```lua
+local app = Library.new({
+	Theme = Library.Themes.Emerald,
+})
+
+app:SetTheme(Library.Themes.Obsidian)
+```
+
+## Theme channels
+
+The theme system supports eight color channels. Keys are case-insensitive.
+
+| Channel | Aliases | Used for |
+| :--- | :--- | :--- |
+| `accent` | `accentcolor` | Accent fills, active states, gradients, and command highlighting. |
+| `tabHeading` | `tabheadingcolor`, `headertext`, `tabtext` | Tab header text. |
+| `background` | `backgroundcolor`, `dark` | Main component/tab backgrounds. Updating it also refreshes the derived hover color. |
+| `hover` | `hovercolor`, `darkhover` | Hover/tooltip background channel. |
+| `text` | `textcolor` | Primary component text. |
+| `inputBackground` | `input`, `inputbg` | Text input and slider-track backgrounds. |
+| `muted` | `mutedcolor`, `gray` | Inactive indicators and selection controls. |
+| `placeholder` | `placeholdercolor`, `textplaceholder` | Placeholder and subdued prompt text. |
+
+<Note>
+For custom themes, the canonical keys shown in the first column are recommended. A theme may be partial, so you only need to provide the channels you want to change.
 </Note>
 
 ## Methods
@@ -100,47 +164,40 @@ When supplied, visibility is set directly instead of toggled.
 
 The same action is bound to **Right Shift** by default. The key can be changed from the built-in `Settings` tab.
 
-### `app:SetAccentColor(color)`
-
-Changes the accent color at runtime and notifies components that listen for theme changes.
-
-```lua
-app:SetAccentColor(Color3.fromRGB(0, 200, 255))
-```
-
-<ParamField path="color" type="Color3" required>
-New accent color. Non-`Color3` values are ignored.
-</ParamField>
-
-### `app:SetTextColor(color)`
-
-Changes the primary UI text color at runtime.
-
-```lua
-app:SetTextColor(Color3.fromRGB(245, 245, 245))
-```
-
-<ParamField path="color" type="Color3" required>
-New text color. Non-`Color3` values are ignored.
-</ParamField>
-
 ### `app:SetTheme(themeTable)`
 
-Sets accent and text colors together.
+Applies every recognized `Color3` channel in a theme table to the running UI. Existing components that listen to the affected channel update immediately.
 
 ```lua
 app:SetTheme({
-	Accent = Color3.fromRGB(255, 80, 160),
-	Text = Color3.fromRGB(255, 255, 255),
+	accent = Color3.fromRGB(170, 0, 255),
+	background = Color3.fromRGB(16, 16, 22),
+	text = Color3.fromRGB(240, 240, 240),
 })
 ```
 
-Accepted keys:
+The same alias rules used by `config.Theme` are accepted. Unknown keys and non-`Color3` values are ignored.
 
-| Theme key | Alias | Effect |
-| :--- | :--- | :--- |
-| `Accent` | `AccentColor` | Updates the global accent color. |
-| `Text` | `TextColor` | Updates the global text color. |
+### Individual theme setters
+
+Each setter changes one theme channel at runtime:
+
+| Method | Channel |
+| :--- | :--- |
+| `app:SetAccentColor(color)` | `accent` |
+| `app:SetTabHeadingColor(color)` | `tabHeading` |
+| `app:SetBackgroundColor(color)` | `background` |
+| `app:SetHoverColor(color)` | `hover` |
+| `app:SetTextColor(color)` | `text` |
+| `app:SetInputBackgroundColor(color)` | `inputBackground` |
+| `app:SetMutedColor(color)` | `muted` |
+| `app:SetPlaceholderColor(color)` | `placeholder` |
+
+```lua
+app:SetAccentColor(Color3.fromRGB(0, 200, 255))
+app:SetBackgroundColor(Color3.fromRGB(18, 18, 24))
+app:SetPlaceholderColor(Color3.fromRGB(150, 150, 160))
+```
 
 ### `app:ExportQuickCommandsList()`
 
@@ -169,16 +226,23 @@ Each line contains the command title, command ID, aliases, and usage when applic
 
 ## Complete application surface
 
-The bundled public application API is:
+The user-facing application API is:
 
 ```text
+Library.Themes
 Library.new(config)
 app:CreateTab(name, defaultPosition)
 app:GetTab(name)
 app:ToggleGui(forcedState)
-app:SetAccentColor(color)
-app:SetTextColor(color)
 app:SetTheme(themeTable)
+app:SetAccentColor(color)
+app:SetTabHeadingColor(color)
+app:SetBackgroundColor(color)
+app:SetHoverColor(color)
+app:SetTextColor(color)
+app:SetInputBackgroundColor(color)
+app:SetMutedColor(color)
+app:SetPlaceholderColor(color)
 app:ExportQuickCommandsList()
 ```
 

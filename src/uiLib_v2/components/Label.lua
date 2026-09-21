@@ -18,7 +18,7 @@ function Label.create(tabObj, config, parentOverride)
 
 	local frame = UIBuilder.create("Frame", {
 		Name = "labelFrame",
-		BackgroundColor3 = Constants.Colors.dark,
+		BackgroundColor3 = Constants.Colors.background,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Size = UDim2.new(1, 0, 0, 20),

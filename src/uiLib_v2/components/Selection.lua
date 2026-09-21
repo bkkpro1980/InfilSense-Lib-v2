@@ -19,7 +19,7 @@ function Selection.create(tabObj, config, parentOverride)
 
 	local frame = UIBuilder.create("Frame", {
 		Name = "frame",
-		BackgroundColor3 = Constants.Colors.dark,
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		Size = UDim2.new(1, 0, 0, 20),
 		ClipsDescendants = true,
@@ -56,12 +56,12 @@ function Selection.create(tabObj, config, parentOverride)
 	UIBuilder.create("UIPadding", { PaddingLeft = UDim.new(0, 3), Parent = text })
 
 	local more = UIBuilder.create("ImageButton", {
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(1, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(1, 0.5),
-        BackgroundTransparency = 1,
-        Parent = header
-    })
+		Size = UDim2.new(0, 20, 0, 20),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(1, 0.5),
+		BackgroundTransparency = 1,
+		Parent = header
+	})
 
 	local img = UIBuilder.create("ImageLabel", {
 		Size = UDim2.new(0, 10, 0, 10),
@@ -69,7 +69,7 @@ function Selection.create(tabObj, config, parentOverride)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://71488146016369",
-		ImageColor3 = Constants.Colors.gray,
+		ImageColor3 = Constants.Colors.muted,
 		Active = false,
 		Parent = more
 	})
@@ -86,11 +86,11 @@ function Selection.create(tabObj, config, parentOverride)
 	end
 
 	button.MouseEnter:Connect(function() 
-		frame.BackgroundColor3 = Constants.darkenColor(Constants.Colors.dark, 0.02) 
+		frame.BackgroundColor3 = Constants.darkenColor(Constants.Colors.background, 0.02) 
 		if info.Description then State.showTooltip(info.Description) end
 	end)
 	button.MouseLeave:Connect(function() 
-		frame.BackgroundColor3 = Constants.Colors.dark 
+		frame.BackgroundColor3 = Constants.Colors.background 
 		if info.Description then State.hideTooltip(info.Description) end
 	end)
 
@@ -156,10 +156,10 @@ function Selection.create(tabObj, config, parentOverride)
 				end
 			end
 		end, function()
-			img.ImageColor3 = Constants.Colors.gray
+			img.ImageColor3 = Constants.Colors.muted
 		end)
 		
-		img.ImageColor3 = opened and Constants.Colors.accent or Constants.Colors.gray
+		img.ImageColor3 = opened and Constants.Colors.accent or Constants.Colors.muted
 	end)
 
 	if (isBindable or isStartup) and not parentOverride then
@@ -167,7 +167,7 @@ function Selection.create(tabObj, config, parentOverride)
 			local ownerKey = commandId .. "::bind"
 			tabObj:openMore(ownerKey, frame, function(moreScroll)
 				tabObj:buildContextMenu(moreScroll, commandId, isBindable, isStartup, executeCommand)
-			end, function() img.ImageColor3 = Constants.Colors.gray end)
+			end, function() img.ImageColor3 = Constants.Colors.muted end)
 			img.ImageColor3 = Constants.Colors.accent
 		end)
 	end
@@ -244,6 +244,18 @@ function Selection.create(tabObj, config, parentOverride)
 			end
 		end
 	})
+
+	State.onThemeChanged(function(themeType, newColor)
+		if frame and frame.Parent then
+			if themeType == "text" then
+				text.TextColor3 = newColor
+			elseif themeType == "background" then
+				frame.BackgroundColor3 = newColor
+			elseif themeType == "muted" then
+				img.ImageColor3 = newColor
+			end
+		end
+	end)
 
 	return {
 		getValue = function() return State.values[commandId] end,

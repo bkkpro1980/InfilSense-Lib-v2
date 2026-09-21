@@ -167,6 +167,16 @@ Press **`F2`** to open the search bar:
 
 ---
 
+## Build
+
+The UI library can be built using DarkLua v0.19.0 via this command:
+
+```
+darklua process src/uiLib_v2/main.lua build/build.lua
+```
+
+---
+
 ## License
 
 This project is licensed under the **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)** Public License.

@@ -34,7 +34,7 @@ function QuickCommands.init()
 		Size = UDim2.new(0, 440, 0, 44),
 		Position = UDim2.new(0.5, 0, 0.2, 0),
 		AnchorPoint = Vector2.new(0.5, 0),
-		BackgroundColor3 = Constants.Colors.dark,
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		Parent = overlay
 	})
@@ -48,7 +48,7 @@ function QuickCommands.init()
 		Size = UDim2.new(1, -2, 1, -2),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = Constants.Colors.dark,
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		Parent = container
 	})
@@ -62,7 +62,7 @@ function QuickCommands.init()
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
-		TextColor3 = Color3.fromRGB(150, 150, 150),
+		TextColor3 = Constants.Colors.placeholder,
 		Text = "",
 		FontFace = Constants.Fonts.regular,
 		TextSize = 16,
@@ -77,7 +77,7 @@ function QuickCommands.init()
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		TextColor3 = Constants.Colors.text,
-		PlaceholderColor3 = Constants.Colors.textPlaceholder,
+		PlaceholderColor3 = Constants.Colors.placeholder,
 		PlaceholderText = "Search commands...",
 		FontFace = Constants.Fonts.regular,
 		TextSize = 16,
@@ -90,7 +90,7 @@ function QuickCommands.init()
 	local resultsScroll = UIBuilder.create("ScrollingFrame", {
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.new(0, 0, 1, 8),
-		BackgroundColor3 = Constants.Colors.dark,
+		BackgroundColor3 = Constants.Colors.background,
 		BorderSizePixel = 0,
 		ScrollBarThickness = 4,
 		Parent = container
@@ -211,7 +211,7 @@ function QuickCommands.init()
 
 			local resFrame = UIBuilder.create("Frame", {
 				Size = UDim2.new(1, 0, 0, 32),
-				BackgroundColor3 = Constants.Colors.darkHover,
+				BackgroundColor3 = Constants.Colors.hover,
 				BorderSizePixel = 0,
 				ClipsDescendants = true,
 				Parent = resultsScroll

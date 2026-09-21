@@ -2,12 +2,13 @@ local Constants = {}
 
 Constants.Colors = {
 	accent = Color3.fromRGB(70, 0, 180),
-	dark = Color3.fromRGB(45, 45, 45),
-	darkHover = Color3.fromRGB(40, 40, 40),
-	gray = Color3.fromRGB(125, 125, 125),
-	inputBg = Color3.fromRGB(30, 30, 30),
+	tabHeading = Color3.fromRGB(255, 255, 255),
+	background = Color3.fromRGB(15, 0, 40),
+	hover = Color3.fromRGB(10, 0, 30),
+	muted = Color3.fromRGB(125, 125, 125),
+	inputBackground = Color3.fromRGB(30, 30, 30),
 	text = Color3.fromRGB(255, 255, 255),
-	textPlaceholder = Color3.fromRGB(175, 175, 175),
+	placeholder = Color3.fromRGB(175, 175, 175),
 }
 
 Constants.Fonts = {
