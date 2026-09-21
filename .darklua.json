@@ -1,0 +1,18 @@
+{
+	"generator": "retain_lines",
+	"bundle": {
+		"require_mode": {
+			"name": "path",
+			"sources": {
+				"@lib": "./src/uiLib_v2",
+				"@components": "./src/uiLib_v2/components",
+				"@utils": "./src/uiLib_v2/utils",
+				"@config": "./src/uiLib_v2/config"
+			}
+		}
+	},
+	"rules": [
+		"remove_comments",
+		"remove_unused_variable"
+	]
+}

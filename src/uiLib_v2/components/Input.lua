@@ -1,7 +1,7 @@
 local Input = {}
-local State = require(script.Parent.Parent.state)
-local Constants = require(script.Parent.Parent.constants)
-local UIBuilder = require(script.Parent.Parent.utils.UIBuilder)
+local State = require("@lib/state")
+local Constants = require("@lib/constants")
+local UIBuilder = require("@utils/UIBuilder")
 
 function Input.create(tabObj, config, parentOverride)
     local parent = parentOverride or tabObj.tabData.scroll

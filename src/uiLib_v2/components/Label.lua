@@ -1,6 +1,6 @@
 local Label = {}
-local Constants = require(script.Parent.Parent.constants)
-local UIBuilder = require(script.Parent.Parent.utils.UIBuilder)
+local Constants = require("@lib/constants")
+local UIBuilder = require("@utils/UIBuilder")
 
 function Label.create(tabObj, config, parentOverride)
 	local parent = parentOverride or tabObj.tabData.scroll

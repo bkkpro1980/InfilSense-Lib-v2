@@ -1,7 +1,7 @@
 local QuickCommands = {}
-local State = require(script.Parent.Parent.state)
-local Constants = require(script.Parent.Parent.constants)
-local UIBuilder = require(script.Parent.Parent.utils.UIBuilder)
+local State = require("@lib/state")
+local Constants = require("@lib/constants")
+local UIBuilder = require("@utils/UIBuilder")
 local UIS = game:GetService("UserInputService")
 
 local function parseCommand(rawText)

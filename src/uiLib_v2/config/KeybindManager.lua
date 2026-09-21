@@ -1,6 +1,6 @@
 local KeybindManager = {}
-local ConfigManager = require(script.Parent.ConfigManager)
-local State = require(script.Parent.Parent.state)
+local ConfigManager = require("@config/ConfigManager")
+local State = require("@lib/state")
 local UIS = game:GetService("UserInputService")
 
 KeybindManager.binds = {}

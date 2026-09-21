@@ -1,6 +1,6 @@
 local ConfigManager = {}
 local HttpService = game:GetService("HttpService")
-local State = require(script.Parent.Parent.state)
+local State = require("@lib/state")
 
 local cachedConfig = nil
 

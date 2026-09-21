@@ -14,9 +14,7 @@ The documented API below describes the bundled `build/build.lua` release. When y
 Load the bundled release directly:
 
 ```lua
-local Library = loadstring(game:HttpGet(
-	"https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"
-))()
+local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
 ```
 
 The loader expects an environment that provides `loadstring` and `game:HttpGet`. Persistence additionally uses the common file APIs `readfile`, `writefile`, `isfile`, `isfolder`, and `makefolder` when available.
@@ -44,8 +42,8 @@ The defaults are:
 | `Name` | `"Unnamed"` | Library name used in state and console output. |
 | `SaveFolder` | `""` | Optional folder for the JSON config. |
 | `SaveId` | `"config"` | Config file name without `.json`. |
-| `AccentColor` | built-in accent | Initial accent color. |
-| `TextColor` | built-in text color | Initial text color. |
+| `AccentColor` | `Color3.fromRGB(0, 170, 255)` | Initial accent color. |
+| `TextColor` | `Color3.fromRGB(255, 255, 255)` | Initial text color. |
 
 `Accent` and `Text` are accepted as aliases for `AccentColor` and `TextColor`.
 

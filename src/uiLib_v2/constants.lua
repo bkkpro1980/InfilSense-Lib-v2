@@ -2,12 +2,12 @@ local Constants = {}
 
 Constants.Colors = {
 	accent = Color3.fromRGB(70, 0, 180),
-	dark = Color3.new(0.176, 0.176, 0.176),
-	darkHover = Color3.new(0.156, 0.156, 0.156),
+	dark = Color3.fromRGB(45, 45, 45),
+	darkHover = Color3.fromRGB(40, 40, 40),
 	gray = Color3.fromRGB(125, 125, 125),
-	inputBg = Color3.new(0.118, 0.118, 0.118),
-	text = Color3.new(1, 1, 1),
-	textPlaceholder = Color3.new(0.7, 0.7, 0.7),
+	inputBg = Color3.fromRGB(30, 30, 30),
+	text = Color3.fromRGB(255, 255, 255),
+	textPlaceholder = Color3.fromRGB(175, 175, 175),
 }
 
 Constants.Fonts = {

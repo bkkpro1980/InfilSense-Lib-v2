@@ -1,8 +1,8 @@
 local Tab = {}
-local State = require(script.Parent.Parent.state)
-local Constants = require(script.Parent.Parent.constants)
-local UIBuilder = require(script.Parent.Parent.utils.UIBuilder)
-local ConfigManager = require(script.Parent.Parent.config.ConfigManager)
+local State = require("@lib/state")
+local Constants = require("@lib/constants")
+local UIBuilder = require("@utils/UIBuilder")
+local ConfigManager = require("@config/ConfigManager")
 local TS = game:GetService("TweenService")
 local GuiService = game:GetService("GuiService")
 
@@ -321,13 +321,13 @@ function Tab.create(tabName, defaultPosition)
 	tabObj.name = tabName
 	tabObj.tabData = tabData
 
-	function tabObj:AddButton(config, pOverride) return require(script.Parent.Button).create(self, config, pOverride) end
-	function tabObj:AddInput(config, pOverride) return require(script.Parent.Input).create(self, config, pOverride) end
+	function tabObj:AddButton(config, pOverride) return require("@components/Button").create(self, config, pOverride) end
+	function tabObj:AddInput(config, pOverride) return require("@components/Input").create(self, config, pOverride) end
 	function tabObj:AddTextBox(config, pOverride) return self:AddInput(config, pOverride) end
 	function tabObj:AddTextbox(config, pOverride) return self:AddInput(config, pOverride) end
-	function tabObj:AddSelection(config, pOverride) return require(script.Parent.Selection).create(self, config, pOverride) end
-	function tabObj:AddSlider(config, pOverride) return require(script.Parent.Slider).create(self, config, pOverride) end
-	function tabObj:AddLabel(config, pOverride) return require(script.Parent.Label).create(self, config, pOverride) end
+	function tabObj:AddSelection(config, pOverride) return require("@components/Selection").create(self, config, pOverride) end
+	function tabObj:AddSlider(config, pOverride) return require("@components/Slider").create(self, config, pOverride) end
+	function tabObj:AddLabel(config, pOverride) return require("@components/Label").create(self, config, pOverride) end
 	function tabObj:GetFrame() return tab end
 	function tabObj:closeMore() closeMore() end
 
@@ -400,7 +400,7 @@ function Tab.create(tabName, defaultPosition)
 
 	function tabObj:buildContextMenu(moreScrollFrame, commandId, isBindable, isStartup, callback, updateTextFunc)
 		local UIS = game:GetService("UserInputService")
-		local KeybindManager = require(script.Parent.Parent.config.KeybindManager)
+		local KeybindManager = require("@config/KeybindManager")
 
 		if isBindable then
 			local assignBtn = self:AddButton({ Info = { Title = "Assign a New Keybind" } }, moreScrollFrame)

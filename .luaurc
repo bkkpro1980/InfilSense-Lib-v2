@@ -1,0 +1,19 @@
+{
+	"languageMode": "nonstrict",
+	"aliases": {
+		"lib": "./src/uiLib_v2",
+		"components": "./src/uiLib_v2/components",
+		"utils": "./src/uiLib_v2/utils",
+		"config": "./src/uiLib_v2/config"
+	},
+	"globals": [
+		"getgenv",
+		"game:HttpGet",
+		"cloneref",
+		"isfile",
+		"isfolder",
+		"readfile",
+		"writefile",
+		"makefolder"
+	]
+}

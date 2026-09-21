@@ -1,6 +1,6 @@
 local UIBuilder = {}
-local Constants = require(script.Parent.Parent.constants)
-local State = require(script.Parent.Parent.state)
+local Constants = require("@lib/constants")
+local State = require("@lib/state")
 
 function UIBuilder.create(className, properties)
 	local inst = Instance.new(className)

@@ -6,155 +6,228 @@ on:
       - main
     paths:
       - 'src/**'
-      - 'bundler.py'
+      - '.darklua.json'
+      - '.luaurc'
+      - '.github/workflows/build.yml'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: build-and-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DARKLUA_VERSION: "0.19.0"
 
 jobs:
-  build-and-release:
+  prepare:
+    name: Prepare Release Metadata
     runs-on: ubuntu-latest
 
+    outputs:
+      is_release: ${{ steps.version.outputs.is_release }}
+      version: ${{ steps.version.outputs.version }}
+
     steps:
-      # 1. Download the repository onto the GitHub runner
+      - name: Parse Version and Release Notes
+        id: version
+        shell: bash
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+
+          # First line of the commit message = version candidate
+          RAW_VERSION=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
+
+          echo "Checking version candidate: $RAW_VERSION"
+
+          # Semantic Versioning 2.0.0
+          # Examples:
+          #   1.0.0
+          #   2.3.1
+          #   1.0.0-beta
+          #   2.0.0-rc.1
+          #   1.2.3+build.5
+          SEMVER_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+
+          if [[ "$RAW_VERSION" =~ $SEMVER_REGEX ]]; then
+            VERSION="$RAW_VERSION"
+
+            echo "Valid release version detected: $VERSION"
+
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+            # Everything after the first line becomes the release notes
+            printf '%s\n' "$COMMIT_MESSAGE" | tail -n +2 > release-notes.md
+
+            # Remove leading blank lines
+            sed -i '/./,$!d' release-notes.md
+
+            # Use a default message if no release notes were provided
+            if [[ ! -s "release-notes.md" ]]; then
+              echo "Automated release for $VERSION" > release-notes.md
+            fi
+
+            echo "Release notes preview:"
+            echo "---------------------"
+            cat release-notes.md
+
+            # Upload release notes so the release job can use them
+            # without needing write access to the repository.
+            mkdir -p release-metadata
+            cp release-notes.md release-metadata/release-notes.md
+
+          else
+            echo "Commit message is not a SemVer release."
+            echo "Skipping GitHub release creation."
+
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload Release Metadata
+        if: steps.version.outputs.is_release == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-metadata
+          path: release-metadata/release-notes.md
+          retention-days: 1
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
 
-      # 2. Install Python
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.x'
-
-      # 3. Run the bundler
-      - name: Run Bundler
-        run: python bundler.py
-
-      # 4. Make sure the bundler actually produced the expected file
-      - name: Verify Build
+      - name: Install DarkLua
+        shell: bash
         run: |
+          set -euo pipefail
+
+          echo "Installing DarkLua v${DARKLUA_VERSION}..."
+
+          curl -fsSL \
+            "https://github.com/seaofvoices/darklua/releases/download/v${DARKLUA_VERSION}/darklua-linux-x86_64.zip" \
+            -o darklua.zip
+
+          unzip -q darklua.zip
+          chmod +x darklua
+          sudo mv darklua /usr/local/bin/darklua
+
+          echo "Installed DarkLua:"
+          darklua --version
+
+      - name: Process & Bundle with DarkLua
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p build
+
+          darklua process \
+            src/uiLib_v2/main.lua \
+            build/build.lua
+
+      - name: Verify Build Output
+        shell: bash
+        run: |
+          set -euo pipefail
+
           if [[ ! -f "build/build.lua" ]]; then
             echo "ERROR: build/build.lua was not created."
             exit 1
           fi
 
-          echo "Build successful:"
-          ls -lh build/build.lua
-
-      # 5. Get the version from the first line of the commit message
-      #    and everything after it becomes the release notes.
-      - name: Get Version and Release Notes
-        id: version
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          # First line = version
-          VERSION=$(printf '%s\n' "$COMMIT_MESSAGE" | head -n 1)
-
-          echo "Version: $VERSION"
-
-          # Validate Semantic Versioning.
-          #
-          # Valid examples:
-          #   2.0.0
-          #   2.0.0-alpha
-          #   2.0.0-beta.1
-          #   2.0.0-rc.1
-          #   2.0.0+build.123
-          #
-          # Invalid examples:
-          #   2.0
-          #   v2.0.0
-          #   2.0
-          #   version 2.0.0
-          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
-            echo "ERROR: '$VERSION' is not a valid Semantic Version."
-            echo ""
-            echo "Expected format:"
-            echo "  MAJOR.MINOR.PATCH"
-            echo ""
-            echo "Examples:"
-            echo "  2.0.0"
-            echo "  2.0.0-alpha"
-            echo "  2.0.0-beta.1"
-            echo "  2.0.0-rc.1"
+          if [[ ! -s "build/build.lua" ]]; then
+            echo "ERROR: build/build.lua is empty."
             exit 1
           fi
 
-          # Everything after the first line becomes the release notes.
-          printf '%s\n' "$COMMIT_MESSAGE" | sed '1d' > release-notes.md
+          echo "Build successful!"
+          ls -lh build/build.lua
 
-          echo ""
-          echo "Release notes:"
-          echo "---------------"
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: build/build.lua
+          retention-days: 1
 
-          if [[ -s "release-notes.md" ]]; then
-            cat release-notes.md
-          else
-            echo "(No release notes provided.)"
-          fi
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - build
 
-          # A '-' in the version means this is a SemVer prerelease.
-          #
-          # 2.0.0       -> stable
-          # 2.0.0-alpha -> prerelease
-          # 2.0.0-beta  -> prerelease
-          # 2.0.0-rc.1  -> prerelease
-          if [[ "$VERSION" == *-* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            echo ""
-            echo "Release type: PRE-RELEASE"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            echo ""
-            echo "Release type: STABLE"
-          fi
+    if: needs.prepare.outputs.is_release == 'true'
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+    permissions:
+      contents: write
 
-      # 6. Make sure we aren't accidentally trying to overwrite
-      #    an existing release.
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: build
+          path: build
+
+      - name: Download Release Metadata
+        uses: actions/download-artifact@v8
+        with:
+          name: release-metadata
+          path: release
+
       - name: Check Release Does Not Already Exist
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           if gh release view "$VERSION" > /dev/null 2>&1; then
             echo "ERROR: Release $VERSION already exists."
-            echo ""
-            echo "Please use a new version number."
+            echo "Please bump your version number."
             exit 1
           fi
 
-          echo "No existing release found for $VERSION."
-
-      # 7. Create the GitHub release and upload build.lua
-      - name: Create GitHub Release
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.prepare.outputs.version }}
           COMMIT_SHA: ${{ github.sha }}
-          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        shell: bash
         run: |
-          if [[ "$PRERELEASE" == "true" ]]; then
-            echo "Creating pre-release $VERSION..."
+          set -euo pipefail
 
-            gh release create "$VERSION" \
-              build/build.lua \
-              --title "$VERSION" \
-              --notes-file release-notes.md \
-              --target "$COMMIT_SHA" \
-              --prerelease
+          RELEASE_ARGS=(
+            "$VERSION"
+            build/build.lua
+            --title "$VERSION"
+            --notes-file release/release-notes.md
+            --target "$COMMIT_SHA"
+          )
+
+          # Versions containing "-" have a SemVer prerelease identifier.
+          # Examples:
+          #   1.0.0-beta
+          #   1.0.0-rc.1
+          #   2.0.0-alpha.3
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Creating prerelease: $VERSION"
+            RELEASE_ARGS+=(--prerelease)
           else
-            echo "Creating stable release $VERSION..."
-
-            gh release create "$VERSION" \
-              build/build.lua \
-              --title "$VERSION" \
-              --notes-file release-notes.md \
-              --target "$COMMIT_SHA" \
-              --latest
+            echo "Creating stable release: $VERSION"
+            RELEASE_ARGS+=(--latest)
           fi
 
-          echo ""
-          echo "Release $VERSION created successfully!"
+          gh release create "${RELEASE_ARGS[@]}"

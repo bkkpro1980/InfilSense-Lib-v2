@@ -1,7 +1,7 @@
 local Selection = {}
-local State = require(script.Parent.Parent.state)
-local Constants = require(script.Parent.Parent.constants)
-local UIBuilder = require(script.Parent.Parent.utils.UIBuilder)
+local State = require("@lib/state")
+local Constants = require("@lib/constants")
+local UIBuilder = require("@utils/UIBuilder")
 
 function Selection.create(tabObj, config, parentOverride)
 	local parent = parentOverride or tabObj.tabData.scroll
@@ -142,17 +142,17 @@ function Selection.create(tabObj, config, parentOverride)
 			activeOptionButtons = {}
 			for _, opt in ipairs(childOptions) do
 				if opt.type == "Button" then
-					local Button = require(script.Parent.Button)
+					local Button = require("@components/Button")
 					local btn = Button.create(tabObj, opt.cfg, moreScroll)
 					local valKey = opt.val or (opt.cfg.Info and opt.cfg.Info.Title) or Constants.randomString()
 					activeOptionButtons[valKey] = btn
 					if State.values[commandId] == valKey then btn.setVisualState(true) end
 				elseif opt.type == "TextBox" then
-					require(script.Parent.Input).create(tabObj, opt.cfg, moreScroll)
+					require("@components/Input").create(tabObj, opt.cfg, moreScroll)
 				elseif opt.type == "Slider" then
-					require(script.Parent.Slider).create(tabObj, opt.cfg, moreScroll)
+					require("@components/Slider").create(tabObj, opt.cfg, moreScroll)
 				elseif opt.type == "Label" then
-					require(script.Parent.Label).create(tabObj, opt.cfg, moreScroll)
+					require("@components/Label").create(tabObj, opt.cfg, moreScroll)
 				end
 			end
 		end, function()
