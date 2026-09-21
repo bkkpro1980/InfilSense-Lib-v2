@@ -52,10 +52,11 @@ function QuickCommands.init()
 		BorderSizePixel = 0,
 		Parent = container
 	})
-	UIBuilder.create("UICorner", { CornerRadius = UDim.new(0, 7), Parent = inner })
+	UIBuilder.create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = inner })
 	
 	local gradient = UIBuilder.createGradient(container)
-	gradient.Visible = true 
+	gradient.Visible = true
+	UIBuilder.create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = gradient })
 
 	local autoCompleteLabel = UIBuilder.create("TextLabel", {
 		Size = UDim2.new(1, -20, 1, 0),
