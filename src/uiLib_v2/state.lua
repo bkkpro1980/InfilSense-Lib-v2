@@ -25,7 +25,6 @@ local State = {
 	tooltipGui = nil,
 	hoveredTooltipText = nil,
 
-	-- Reactive Theme Listeners
 	themeListeners = {},
 }
 

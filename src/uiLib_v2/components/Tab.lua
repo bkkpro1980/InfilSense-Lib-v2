@@ -168,7 +168,7 @@ function Tab.create(tabName, defaultPosition)
 	local scroll = UIBuilder.create("ScrollingFrame", {
 		Name = "scroll",
 		Visible = not isMinimized,
-		ScrollBarThickness = 6,
+		ScrollBarThickness = 4,
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.new(0, 0, 0, 20),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -194,7 +194,7 @@ function Tab.create(tabName, defaultPosition)
 	local moreScroll = UIBuilder.create("ScrollingFrame", {
 		Name = "moreScroll",
 		Visible = false,
-		ScrollBarThickness = 6,
+		ScrollBarThickness = 4,
 		Size = UDim2.new(1, 0, 0, 120),
 		Position = UDim2.new(1, 0, 0, 0),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
@@ -209,7 +209,6 @@ function Tab.create(tabName, defaultPosition)
 	local function bindDynamicSize(scrollingFrame, listLayout, minHeight)
 		local function refresh()
 			if isMinimized or isAnimating then return end
-			scrollingFrame.Visible = true
 			local desired = math.max(minHeight or 20, listLayout.AbsoluteContentSize.Y)
 			local _, _, _, bottomSafe = getScreenBounds()
 			local realTopY = getRealScreenPos(scrollingFrame).Y

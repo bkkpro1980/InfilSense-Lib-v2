@@ -56,12 +56,12 @@ function Selection.create(tabObj, config, parentOverride)
 	UIBuilder.create("UIPadding", { PaddingLeft = UDim.new(0, 3), Parent = text })
 
 	local more = UIBuilder.create("ImageButton", {
-		Size = UDim2.new(0, 20, 0, 20),
-		Position = UDim2.new(1, -2, 0.5, 0),
-		AnchorPoint = Vector2.new(1, 0.5),
-		BackgroundTransparency = 1,
-		Parent = header
-	})
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        AnchorPoint = Vector2.new(1, 0.5),
+        BackgroundTransparency = 1,
+        Parent = header
+    })
 
 	local img = UIBuilder.create("ImageLabel", {
 		Size = UDim2.new(0, 10, 0, 10),
