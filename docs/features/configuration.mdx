@@ -1,0 +1,155 @@
+---
+title: "Configuration & Persistence"
+description: "Understand JSON storage for tabs, keybinds, startup flags, grid settings, and sliders."
+---
+
+Configuration is loaded automatically by `Library.new()` and saved as controls change.
+
+## File location
+
+The path is derived from `SaveFolder` and `SaveId`:
+
+| Configuration | File |
+| :--- | :--- |
+| `SaveFolder = ""`, `SaveId = "config"` | `config.json` |
+| `SaveFolder = "MyConfigs"`, `SaveId = "default"` | `MyConfigs/default.json` |
+
+```lua
+local app = Library.new({
+	Name = "Persistent Demo",
+	SaveFolder = "MyConfigs",
+	SaveId = "player_settings",
+})
+```
+
+The file extension is always `.json`.
+
+<Warning>
+Persistence depends on executor/environment file APIs. If the environment does not provide them, runtime UI behavior still works but saved state cannot be written to disk.
+</Warning>
+
+## Default structure
+
+A fresh configuration starts with this shape:
+
+```lua
+{
+	Startup = {},
+	Keybinds = {},
+	Settings = {
+		GridSnap = true,
+		GridSize = 15,
+	},
+	TabPositions = {},
+	TabStates = {},
+	MenuToggle = "RightShift",
+	QuickCommandsToggle = "F2",
+}
+```
+
+## Tab positions and state
+
+Dragging a tab saves its position in `TabPositions`. Collapsing or expanding a tab saves its minimized state in `TabStates`.
+
+```text
+TabPositions["Main"] = {
+	X = { 0, 15 },
+	Y = { 0, 80 },
+}
+
+TabStates["Main"] = true
+```
+
+When the same `SaveFolder` and `SaveId` are used on the next initialization, those values restore the tab.
+
+## Keybinds
+
+Bindable components store their assigned keyboard key by command ID:
+
+```text
+Keybinds["noclip"] = "F6"
+```
+
+The built-in `Settings` tab stores the two global shortcuts separately:
+
+```text
+MenuToggle = "RightShift"
+QuickCommandsToggle = "F2"
+```
+
+### Rebinding component controls
+
+Enable binding on a component:
+
+```lua
+local button = tab:AddButton({
+	Info = { Title = "Noclip" },
+	InternalInfo = {
+		Toggle = true,
+		UniqueCommandId = "noclip",
+		Bindable = true,
+	},
+	Callback = function(enabled)
+		print(enabled)
+	end,
+})
+```
+
+Then right-click the component and choose **Assign a New Keybind**. The selected key is written under `Keybinds["noclip"]`.
+
+## Startup flags
+
+Controls with `StartupAvailable = true` expose a **Toggle Startup** action in their right-click menu:
+
+```text
+Startup["noclip"] = true
+```
+
+The current bundle consumes that startup flag automatically for **buttons** by executing the button callback with `true` when the library initializes.
+
+For inputs, selections, and sliders, the context-menu flag is persisted but the component itself does not automatically execute its callback from that flag during initialization.
+
+## Saved sliders
+
+A slider opts into persistence with `Save = true`:
+
+```lua
+tab:AddSlider({
+	Info = { Title = "Field of View" },
+	InternalInfo = { UniqueCommandId = "camera_fov" },
+	Min = 70,
+	Max = 120,
+	Default = 90,
+	Save = true,
+})
+```
+
+The value is stored as:
+
+```text
+Settings["camera_fov"] = 95
+```
+
+The implementation also accepts `InternalInfo.Save = true` and `Settings = { save = true }` on the component config.
+
+## Grid settings
+
+The built-in settings tab stores:
+
+```text
+Settings.GridSnap = true
+Settings.GridSize = 15
+```
+
+The settings UI limits `GridSize` to **5–30** pixels in **5-pixel** increments.
+
+## Resetting layout
+
+The built-in **Reset Tab Positions** action clears:
+
+```text
+TabPositions = {}
+TabStates = {}
+```
+
+It then moves current tabs back to their initial vertical stack order.

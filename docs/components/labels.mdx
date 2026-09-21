@@ -1,55 +1,68 @@
 ---
 title: "Labels"
-description: "Static text rows for titles, section headers, and version tags."
+description: "Add static text for headings, section labels, and lightweight metadata."
 ---
 
-Labels allow adding non-interactive descriptions, category dividers, or script metadata.
+Labels are non-interactive rows intended for headings, descriptions, and separators.
 
-## Simple Label
-
-Pass a string directly to render a standard label:
+## Simple label
 
 ```lua
 tab:AddLabel("Player Configuration")
 ```
 
-## Custom Styled Label
-
-Pass a configuration table to customize color, text size, and typography:
+## Styled label
 
 ```lua
 tab:AddLabel({
-	Text = "Version 2.1.0 • Stable Release",
-	TextColor3 = Color3.fromRGB(150, 150, 150),
-	TextSize = 12
+	Text = "Character Settings",
+	TextColor3 = Color3.fromRGB(200, 200, 200),
+	TextSize = 14,
 })
 ```
 
----
+`Info.Title` is accepted as a fallback when `Text` is not supplied:
+
+```lua
+tab:AddLabel({
+	Info = { Title = "Advanced Settings" },
+})
+```
 
 ## Parameters
 
-Pass a plain `string` for a simple label, or a table for a styled one:
-
-<ParamField path="Text" type="string" default='"Label"'>
-	The label's text content. Also accepts `Info.Title` as a fallback.
+<ParamField path="config" type="string | table" required>
+Use a string for the simplest form or a table for styling.
 </ParamField>
 
-<ParamField path="TextColor3" type="Color3" default="Color3.fromRGB(text color)">
-	Overrides the label's text color.
+<ParamField path="Text" type="string" default='"Label"'>
+Label content. `Info.Title` is used as a fallback.
+</ParamField>
+
+<ParamField path="Info.Title" type="string" optional>
+Fallback label content when `Text` is absent.
+</ParamField>
+
+<ParamField path="TextColor3" type="Color3" optional>
+Custom text color for this label.
 </ParamField>
 
 <ParamField path="TextSize" type="number" default="13">
-	Overrides the label's font size.
+Text size in pixels.
 </ParamField>
 
----
-
-### Label Object Methods
+## Returned handle
 
 ```lua
-local myLabel = tab:AddLabel("Initial text")
+local label = tab:AddLabel("Initial text")
 
-myLabel:SetText("Updated text string")
-local currentText = myLabel:GetText()
+label:SetText("Updated text")
+print(label:GetText())
 ```
+
+| Member | Behavior |
+| :--- | :--- |
+| `frame` | Outer label `Frame`. |
+| `textLabel` | Underlying `TextLabel`. |
+| `SetText(text)` | Replaces the label text. |
+| `GetText()` | Returns the current label text. |

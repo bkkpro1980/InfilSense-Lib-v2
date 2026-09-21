@@ -1,84 +1,185 @@
 ---
 title: "Application API"
-description: "Constructor and methods for managing the root library instance."
+description: "Create the root library instance and control global UI behavior."
 ---
 
-## Constructor
+The application object returned by `Library.new()` is the entry point for the entire library.
 
-### `Library.new(config)`
+## `Library.new(config)`
 
-Creates the root `ScreenGui` (with `DisplayOrder = 2147483647`), loads saved configurations, initializes the Quick Commands palette, and creates the default Settings tab.
+Creates the root `ScreenGui`, loads configuration, initializes Quick Commands, and creates the built-in `Settings` tab.
 
 ```lua
 local app = Library.new({
 	Name = "Universal Utility",
 	SaveFolder = "Configs",
-	SaveId = "settings"
+	SaveId = "settings",
+	AccentColor = Color3.fromRGB(70, 0, 180),
+	TextColor = Color3.fromRGB(255, 255, 255),
 })
 ```
 
-#### Parameters
-
-<ParamField path="Name" type="string" default="Unnamed">
-	Title displayed on top-level headers and log messages.
+<ParamField path="config" type="table" optional>
+Application configuration. Omit the table to use the built-in defaults.
 </ParamField>
 
-<ParamField path="SaveFolder" type="string" default='""'>
-	Folder name inside executor storage where JSON configuration files are saved.
+<ParamField path="config.Name" type="string" default='"Unnamed"'>
+Library name used in internal state and console messages.
 </ParamField>
 
-<ParamField path="SaveId" type="string" default="config">
-	Base name for the JSON configuration file (omitting `.json`).
+<ParamField path="config.SaveFolder" type="string" default='""'>
+Folder used for the JSON configuration file. When empty, the config is stored as `<SaveId>.json`.
 </ParamField>
 
----
+<ParamField path="config.SaveId" type="string" default='"config"'>
+Base name for the JSON configuration file. The `.json` extension is added automatically.
+</ParamField>
+
+<ParamField path="config.AccentColor" type="Color3" optional>
+Initial accent color. `Accent` is accepted as an alias.
+</ParamField>
+
+<ParamField path="config.TextColor" type="Color3" optional>
+Initial text color. `Text` is accepted as an alias.
+</ParamField>
+
+<Note>
+`Library.new()` also creates a tab named `Settings`. Calling `CreateTab("Settings")` later returns that existing tab.
+</Note>
 
 ## Methods
 
 ### `app:CreateTab(name, defaultPosition)`
 
-Creates a draggable window tab. If coordinates already exist in the configuration file, they will be loaded automatically. Otherwise, the tab spawns minimized in a vertical stack below the Roblox top bar.
+Creates a draggable floating tab. Reusing an existing tab name returns the existing tab object.
 
 ```lua
-local tab = app:CreateTab("Combat")
+local combat = app:CreateTab("Combat")
+local movement = app:CreateTab(
+	"Movement",
+	UDim2.new(0, 260, 0, 80)
+)
 ```
 
 <ParamField path="name" type="string" required>
-	The title text displayed on the tab header.
+Tab title and the key used for saved tab position/state.
 </ParamField>
 
 <ParamField path="defaultPosition" type="UDim2" optional>
-	Optional default position override. If omitted, the tab automatically stacks vertically on the left.
-</ParamField>
-
----
-
-### `app:GetTab(name)`
-
-Returns an existing `Tab` object by its title name. Ideal for accessing the built-in `"Settings"` tab.
-
-```lua
-local settingsTab = app:GetTab("Settings")
-if settingsTab then
-	settingsTab:AddLabel("Version 2.0.0")
-end
-```
-
----
-
-### `app:ToggleGui(forcedState)`
-
-Toggles or directly sets the visibility of all draggable tabs. The Quick Commands search overlay remains operational even when tabs are hidden.
-
-```lua
-app:ToggleGui()			-- Inverts visibility
-app:ToggleGui(false)	-- Hides tabs
-```
-
-<ParamField path="forcedState" type="boolean" optional>
-	When provided, sets visibility explicitly (`true` to show, `false` to hide) instead of toggling.
+Initial pixel position used only when the tab has no saved position.
 </ParamField>
 
 <Note>
-	Tabs are also toggled by a global keybind — **Right Shift** by default — configurable from the auto-created **Settings** tab. This is separate from the Quick Commands keybind (`F2` by default).
+New tabs start minimized. Without a saved position or explicit position, the library stacks them vertically. Dragging is viewport-clamped and can use grid snapping.
 </Note>
+
+### `app:GetTab(name)`
+
+Returns an existing tab object or `nil` if the name is not registered.
+
+```lua
+local settings = app:GetTab("Settings")
+if settings then
+	settings:AddLabel("Additional settings")
+end
+```
+
+### `app:ToggleGui(forcedState)`
+
+Shows or hides every floating tab. The Quick Commands overlay remains available.
+
+```lua
+app:ToggleGui()      -- Toggle
+app:ToggleGui(true)  -- Show
+app:ToggleGui(false) -- Hide
+```
+
+<ParamField path="forcedState" type="boolean" optional>
+When supplied, visibility is set directly instead of toggled.
+</ParamField>
+
+The same action is bound to **Right Shift** by default. The key can be changed from the built-in `Settings` tab.
+
+### `app:SetAccentColor(color)`
+
+Changes the accent color at runtime and notifies components that listen for theme changes.
+
+```lua
+app:SetAccentColor(Color3.fromRGB(0, 200, 255))
+```
+
+<ParamField path="color" type="Color3" required>
+New accent color. Non-`Color3` values are ignored.
+</ParamField>
+
+### `app:SetTextColor(color)`
+
+Changes the primary UI text color at runtime.
+
+```lua
+app:SetTextColor(Color3.fromRGB(245, 245, 245))
+```
+
+<ParamField path="color" type="Color3" required>
+New text color. Non-`Color3` values are ignored.
+</ParamField>
+
+### `app:SetTheme(themeTable)`
+
+Sets accent and text colors together.
+
+```lua
+app:SetTheme({
+	Accent = Color3.fromRGB(255, 80, 160),
+	Text = Color3.fromRGB(255, 255, 255),
+})
+```
+
+Accepted keys:
+
+| Theme key | Alias | Effect |
+| :--- | :--- | :--- |
+| `Accent` | `AccentColor` | Updates the global accent color. |
+| `Text` | `TextColor` | Updates the global text color. |
+
+### `app:ExportQuickCommandsList()`
+
+Prints every registered Quick Command, returns the same entries as a Lua array, and writes a text file when the environment exposes `writefile`.
+
+```lua
+local commands = app:ExportQuickCommandsList()
+for _, line in ipairs(commands) do
+	print(line)
+end
+```
+
+The file path is:
+
+```text
+<SaveFolder>/commandIds/<SaveId>.txt
+```
+
+When `SaveFolder` is empty, that becomes:
+
+```text
+commandIds/<SaveId>.txt
+```
+
+Each line contains the command title, command ID, aliases, and usage when applicable.
+
+## Complete application surface
+
+The bundled public application API is:
+
+```text
+Library.new(config)
+app:CreateTab(name, defaultPosition)
+app:GetTab(name)
+app:ToggleGui(forcedState)
+app:SetAccentColor(color)
+app:SetTextColor(color)
+app:SetTheme(themeTable)
+app:ExportQuickCommandsList()
+```
+
+`ConfigManager`, `KeybindManager`, `State`, and component `.create()` functions are bundled implementation modules, not part of the stable application contract.

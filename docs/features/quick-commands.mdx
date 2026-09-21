@@ -1,40 +1,170 @@
 ---
 title: "Quick Commands"
-description: "Keyboard-driven command palette for running actions, toggles, and sliders."
+description: "Search and execute registered controls with aliases, arguments, and autocomplete."
 ---
 
-Press **`F2`** (or your custom bound key) to toggle the Quick Commands palette.
+Quick Commands is initialized automatically by `Library.new()` and opens with **F2** by default.
 
-## Core Capabilities
+<Info>
+Every button, input, slider, and selection created by the library registers a Quick Command. The command ID is stable when you provide `InternalInfo.UniqueCommandId`; otherwise the library generates a random ID.
+</Info>
 
-- **Key Release Trigger**: Binds to key release (`InputEnded`) so keys like `'` or `;` never leak characters into the typing bar.
-- **Priority Matching**: Matches against command titles and aliases with priority ordering:
-	1. **Exact Match**: `tk` selects `tele` instead of partial match `tkf`.
-	2. **Prefix Match**: Matches items starting with the query string.
-	3. **Substring Match**: Matches any command containing the query string.
-- **Direct Arguments**: Pass arguments separated by spaces:
-	- `ws 120` &rarr; Sets WalkSpeed slider to 120.
-	- `noclip on` &rarr; Toggles noclip on.
-	- `preset sky` &rarr; Selects the `Sky` dropdown option.
-- **Tab Auto-Complete**: Displays a light-gray auto-complete ghost preview. Pressing `Tab` fills in the command title or alias.
-- **Enter Execution**: Pressing `Enter` runs the top highlighted command and closes the search overlay.
+## Open the palette
 
-## Registering Aliases
+```text
+F2
+```
 
-Add an `Aliases` table to any component configuration:
+The palette accepts a command followed by optional space-separated arguments:
+
+```text
+ws 120
+noclip on
+message hello from quick commands
+```
+
+Keyboard input is ignored while a Roblox text box is focused.
+
+## Matching
+
+Quick Commands searches each command's:
+
+- display title
+- command ID
+- aliases
+
+Matches are ranked:
+
+| Priority | Match |
+| :--- | :--- |
+| 1 | Exact |
+| 2 | Prefix |
+| 3 | Substring |
+
+Within the same priority, command titles are ordered alphabetically.
+
+## Aliases
+
+Aliases can be declared in any of three places:
+
+```lua
+Aliases = { "preferred" }
+Info = { Aliases = { "fallback" } }
+InternalInfo = { Aliases = { "also-supported" } }
+```
+
+The resolution order is `config.Aliases`, then `Info.Aliases`, then `InternalInfo.Aliases`.
+
+A complete example:
 
 ```lua
 tab:AddSlider({
 	Info = { Title = "Field of View" },
 	InternalInfo = {
-		UniqueCommandId = "fov_slider",
-		Aliases = { "fov", "camfov" }
+		UniqueCommandId = "camera_fov",
+		Aliases = { "fov", "camfov" },
 	},
 	Min = 70,
 	Max = 120,
-	Default = 70,
-	Callback = function(val)
-		workspace.CurrentCamera.FieldOfView = val
-	end
+	Default = 90,
 })
+```
+
+You can then use:
+
+```text
+camera_fov 100
+fov 100
+camfov 100
+```
+
+## Buttons
+
+Normal buttons ignore extra arguments:
+
+```text
+respawn
+```
+
+Toggle buttons accept explicit state values:
+
+```text
+noclip on
+noclip off
+noclip true
+noclip false
+noclip 1
+noclip 0
+```
+
+Without a recognized state argument, the toggle flips.
+
+## Sliders
+
+Numeric sliders accept one number:
+
+```text
+ws 120
+```
+
+Boolean sliders accept:
+
+```text
+mute on
+mute off
+mute true
+mute false
+mute 1
+mute 0
+```
+
+With no argument, a boolean slider flips and a numeric slider reapplies its current value.
+
+## Inputs
+
+Standard inputs join all arguments into one text string:
+
+```text
+message hello from quick commands
+```
+
+Toggle inputs use an optional state prefix:
+
+```text
+prefix on [VIP]
+prefix off [VIP]
+prefix [VIP]
+```
+
+Explicit state prefixes are `on`, `true`, `1`, `off`, and `false`.
+
+## Selections
+
+Selection commands match an option using its `Value` or display title. The matcher checks longer multi-word prefixes first.
+
+```text
+dest Bank Vault
+```
+
+Arguments remaining after the selected option are forwarded:
+
+```text
+player Builderman
+```
+
+For a single-select selection, invoking the command with no arguments advances to the next configured option.
+
+## Autocomplete
+
+When the best match begins with the typed query, the palette shows a ghosted completion. Press **Tab** to insert the matched name or alias followed by a space.
+
+Press **Enter** to execute the top result and close the palette.
+
+## Export the command list
+
+`app:ExportQuickCommandsList()` returns every registered command as an array and prints the same entries to the console. When `writefile` is available, the list is also written under `commandIds/`.
+
+```lua
+local commands = app:ExportQuickCommandsList()
+print("Registered commands:", #commands)
 ```

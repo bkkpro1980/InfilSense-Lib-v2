@@ -34,18 +34,18 @@ Documentation can be found [here](https://docs.infilsense.dpdns.org).
 local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
 
 local app = Library.new({
-    Name = "My Script",
-    SaveFolder = "MyConfigs",
-    SaveId = "config"
+	Name = "My Script",
+	SaveFolder = "MyConfigs",
+	SaveId = "config"
 })
 
 local mainTab = app:CreateTab("Main")
 
 mainTab:AddButton({
-    Info = { Title = "Print Hello", Description = "Prints a test message." },
-    Callback = function()
-        print("Hello, world!")
-    end
+	Info = { Title = "Print Hello", Description = "Prints a test message." },
+	Callback = function()
+		print("Hello, world!")
+	end
 })
 ```
 
@@ -88,61 +88,61 @@ Toggles or sets the visibility of all draggable tabs.
 #### `tab:AddButton(config)`
 ```lua
 tab:AddButton({
-    Info = { Title = "Button Title", Description = "Tooltip text" },
-    InternalInfo = {
-        UniqueCommandId = "unique_btn_id", -- Required for binds/startup
-        Toggle = false,                    -- Set true for toggle mode
-        Bindable = true,                   -- Right-click keybind assignment
-        StartupAvailable = true,           -- Right-click run on script start
-        Aliases = { "btn", "b" }           -- Quick Commands aliases
-    },
-    Callback = function(state) end
+	Info = { Title = "Button Title", Description = "Tooltip text" },
+	InternalInfo = {
+		UniqueCommandId = "unique_btn_id",	-- Required for binds/startup
+		Toggle = false,						-- Set true for toggle mode
+		Bindable = true,					-- Right-click keybind assignment
+		StartupAvailable = true,			-- Right-click run on script start
+		Aliases = { "btn", "b" }			-- Quick Commands aliases
+	},
+	Callback = function(state) end
 })
 ```
 
 #### `tab:AddSlider(config)`
 ```lua
 tab:AddSlider({
-    Info = { Title = "WalkSpeed", Description = "Adjusts movement speed" },
-    InternalInfo = {
-        UniqueCommandId = "walkspeed_slider",
-        Aliases = { "ws", "speed" }
-    },
-    Min = 16,
-    Max = 250,
-    Default = 16,
-    Step = 1,
-    SliderType = "number", -- "number" or "bool"
-    Save = false,          -- Persist value to JSON
-    Callback = function(value) end
+	Info = { Title = "WalkSpeed", Description = "Adjusts movement speed" },
+	InternalInfo = {
+		UniqueCommandId = "walkspeed_slider",
+		Aliases = { "ws", "speed" }
+	},
+	Min = 16,
+	Max = 250,
+	Default = 16,
+	Step = 1,
+	SliderType = "number",	-- "number" or "bool"
+	Save = false,			-- Persist value to JSON
+	Callback = function(value) end
 })
 ```
 
 #### `tab:AddInput(config)`
 ```lua
 tab:AddInput({
-    Info = { Title = "Set Message", Description = "Custom text input" },
-    DefaultText = "Default text here",
-    InternalInfo = {
-        Toggle = false, -- Set true to enable toggle behavior
-        UniqueCommandId = "custom_input",
-        Aliases = { "msg" }
-    },
-    Callback = function(text) end
+	Info = { Title = "Set Message", Description = "Custom text input" },
+	DefaultText = "Default text here",
+	InternalInfo = {
+		Toggle = false, -- Set true to enable toggle behavior
+		UniqueCommandId = "custom_input",
+		Aliases = { "msg" }
+	},
+	Callback = function(text) end
 })
 ```
 
 #### `tab:AddSelection(config)`
 ```lua
 local dropdown = tab:AddSelection({
-    Info = { Title = "Select Target", Description = "Selects active target" },
-    SingleSelect = true,
-    DefaultValue = "Option 1",
-    InternalInfo = {
-        UniqueCommandId = "target_select",
-        Aliases = { "target" }
-    },
-    Callback = function(selectedOption) end
+	Info = { Title = "Select Target", Description = "Selects active target" },
+	SingleSelect = true,
+	DefaultValue = "Option 1",
+	InternalInfo = {
+		UniqueCommandId = "target_select",
+		Aliases = { "target" }
+	},
+	Callback = function(selectedOption) end
 })
 
 dropdown:AddOption({ Info = { Title = "Option 1" }, Value = "Option 1" })

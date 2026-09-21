@@ -1,81 +1,163 @@
 ---
 title: "Sliders"
-description: "Interactive horizontal sliders for numbers and booleans."
+description: "Create numeric or boolean sliders with snapping, persistence, and Quick Commands."
 ---
 
-Sliders support real-time dragging, step increments, and direct argument execution through Quick Commands.
+Sliders update while dragging and snap numeric values to `Step`. They register with Quick Commands automatically.
 
-## Numeric Slider
+## Numeric slider
 
 ```lua
 tab:AddSlider({
 	Info = {
 		Title = "WalkSpeed",
-		Description = "Controls movement speed. In Quick Commands: 'ws 80'"
+		Description = "Adjust character movement speed.",
 	},
 	InternalInfo = {
-		UniqueCommandId = "player_walkspeed",
-		Aliases = { "ws", "speed" }
+		UniqueCommandId = "walkspeed",
+		Aliases = { "ws", "speed" },
 	},
 	Min = 16,
 	Max = 250,
 	Default = 16,
 	Step = 1,
-	SliderType = "number",
-	Save = false, -- Set true to save value across sessions
-	Callback = function(val)
-		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then hum.WalkSpeed = val end
-	end
+	Save = true,
+	Callback = function(value)
+		print("WalkSpeed:", value)
+	end,
 })
 ```
 
-## Boolean Slider (On / Off)
+## Boolean slider
 
-Setting `SliderType = "bool"` converts the slider into a binary On/Off toggle:
+Use `SliderType = "bool"`:
 
 ```lua
 tab:AddSlider({
-	Info = {
-		Title = "Mute Audio",
-		Description = "Toggles client sound volume."
-	},
-	InternalInfo = {
-		UniqueCommandId = "mute_audio"
-	},
+	Info = { Title = "Mute Audio" },
+	InternalInfo = { UniqueCommandId = "mute_audio" },
 	SliderType = "bool",
-	Default = 0, -- 0 for Off, 1 for On
-	Callback = function(val)
-		local isMuted = (val == 1)
-		print("Muted:", isMuted)
-	end
+	Default = false,
+	Callback = function(value)
+		local muted = value == 1
+		print("Muted:", muted)
+	end,
 })
 ```
 
----
+The boolean implementation stores `0` and `1`, and displays **Off** / **On**.
 
-## Parameters
+## Configuration
+
+<ParamField path="Info.Title" type="string" default='"Slider"'>
+Slider label.
+</ParamField>
+
+<ParamField path="Info.Description" type="string" optional>
+Tooltip text shown while hovering the slider row.
+</ParamField>
 
 <ParamField path="Min" type="number" default="0">
-	Minimum boundary value.
+Numeric minimum. Boolean sliders override this to `0`.
 </ParamField>
 
 <ParamField path="Max" type="number" default="100">
-	Maximum boundary value.
+Numeric maximum. Boolean sliders override this to `1`.
 </ParamField>
 
-<ParamField path="Default" type="number" default="Min">
-	Initial default value.
+<ParamField path="Default" type="number | boolean" optional>
+Initial value. Numeric sliders default to `Min`. Boolean defaults normalize to `0` or `1`.
 </ParamField>
 
 <ParamField path="Step" type="number" default="1">
-	Step interval to snap to when dragging.
+Numeric snap interval. Boolean sliders force `Step = 1`.
 </ParamField>
 
-<ParamField path="SliderType" type="string" default="number">
-	`"number"` or `"bool"`.
+<ParamField path="SliderType" type='"number" | "bool"' default='"number"'>
+Selects numeric or boolean behavior.
 </ParamField>
 
 <ParamField path="Save" type="boolean" default="false">
-	When `true`, automatically saves and restores the slider value across sessions.
+Persists the slider value under `Settings[commandId]`. `InternalInfo.Save = true` and `Settings.save = true` on the component config are also accepted.
 </ParamField>
+
+<ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
+Stable Quick Commands and persistence ID.
+</ParamField>
+
+<ParamField path="InternalInfo.Bindable" type="boolean" default="false">
+Adds a right-click keybind menu. In the current implementation, a bindable **boolean** slider can toggle through its keybind callback. A numeric slider exposes the binding UI but does not use the assigned keybind to set a numeric value.
+</ParamField>
+
+<ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
+Adds a persisted startup flag to the right-click menu. The slider itself is not automatically executed from that flag during initialization.
+</ParamField>
+
+<ParamField path="Aliases" type="string[]" optional>
+Alternate Quick Commands names. `Info.Aliases` and `InternalInfo.Aliases` are also recognized.
+</ParamField>
+
+<ParamField path="Callback" type="function" optional>
+Receives the current stored slider value. Numeric sliders pass a number; boolean sliders pass `0` or `1`.
+</ParamField>
+
+## Persistence
+
+When `Save` is enabled, the library loads a previously saved value before using `Default`:
+
+```lua
+tab:AddSlider({
+	Info = { Title = "Field of View" },
+	InternalInfo = {
+		UniqueCommandId = "camera_fov",
+	},
+	Min = 70,
+	Max = 120,
+	Default = 90,
+	Save = true,
+})
+```
+
+The saved value is stored in:
+
+```text
+Settings["camera_fov"]
+```
+
+## Quick Commands
+
+Numeric sliders accept one numeric argument:
+
+```text
+ws 120
+```
+
+Boolean sliders accept `on`, `off`, `true`, `false`, `1`, or `0`:
+
+```text
+mute on
+mute off
+```
+
+With no argument, a numeric slider reapplies its current value and a boolean slider toggles its current state.
+
+## Returned handle
+
+```lua
+local slider = tab:AddSlider({
+	Info = { Title = "Field of View" },
+	Min = 70,
+	Max = 120,
+	Default = 90,
+})
+
+print(slider:getId())
+print(slider:getValue())
+slider:setValue(100)
+```
+
+| Method | Behavior |
+| :--- | :--- |
+| `getValue()` | Returns the stored numeric value or boolean-slider `0`/`1`. |
+| `getId()` | Returns the resolved command ID. |
+| `setValue(value)` | Clamps/snaps the value, updates the visuals, fires the callback, and saves when persistence is enabled. |

@@ -4,32 +4,45 @@
 	"name": "InfilSense UI Library v2",
 	"colors": {
 		"primary": "#aa00ff",
-		"light": "#aa00ff",
-		"dark": "#aa00ff"
+		"light": "#c266ff",
+		"dark": "#7a00b8"
 	},
 	"navigation": {
 		"groups": [
 			{
 				"group": "Getting Started",
-				"pages": ["quickstart"]
+				"icon": "rocket",
+				"pages": [
+					"quickstart"
+				]
 			},
 			{
-				"group": "Core APIs",
-				"pages": ["api-reference/app", "api-reference/tab"]
+				"group": "API Reference",
+				"icon": "square-terminal",
+				"pages": [
+					"api-reference/app",
+					"api-reference/tab"
+				]
 			},
 			{
 				"group": "Components",
+				"icon": "blocks",
 				"pages": [
 					"components/buttons",
-					"components/sliders",
 					"components/inputs",
 					"components/selections",
+					"components/sliders",
 					"components/labels"
 				]
 			},
 			{
 				"group": "Features",
-				"pages": ["features/quick-commands", "features/grid-system"]
+				"icon": "sparkles",
+				"pages": [
+					"features/quick-commands",
+					"features/grid-system",
+					"features/configuration"
+				]
 			}
 		]
 	}

@@ -1,58 +1,224 @@
 ---
 title: "Quickstart"
-description: "Get up and running with InfilSense UI Library v2 in under five minutes."
+description: "Install InfilSense UI Library v2 and build a floating Roblox UI in a few minutes."
 ---
 
-## Installation
+InfilSense UI Library v2 is a floating Roblox UI library built around draggable, collapsible tabs. Components automatically integrate with Quick Commands, optional keybinds, tooltips, grid snapping, and persistent configuration.
 
-Load the compiled bundle directly using `loadstring`:
+<Info>
+The documented API below describes the bundled `build/build.lua` release. When you ship a library update, regenerate the bundle before publishing the new release.
+</Info>
+
+## 1. Install
+
+Load the bundled release directly:
 
 ```lua
-local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
+local Library = loadstring(game:HttpGet(
+	"https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"
+))()
 ```
 
-## Basic Setup
+The loader expects an environment that provides `loadstring` and `game:HttpGet`. Persistence additionally uses the common file APIs `readfile`, `writefile`, `isfile`, `isfolder`, and `makefolder` when available.
 
-Initialize an application instance and create your first draggable window tab:
+<Warning>
+When those file APIs are unavailable, the UI can still be created, but configuration, tab positions, keybinds, and saved slider values cannot be persisted to disk.
+</Warning>
+
+## 2. Create the application
+
+`Library.new()` creates the root UI, initializes Quick Commands, loads configuration, and creates the built-in `Settings` tab.
 
 ```lua
-local Library = loadstring(game:HttpGet("https://github.com/bkkpro1980/InfilSense-Lib-v2/releases/latest/download/build.lua"))()
-
--- 1. Initialize the library
 local app = Library.new({
 	Name = "My Script",
 	SaveFolder = "MyConfigs",
-	SaveId = "default"
-})
-
--- 2. Create a tab (spawns minimized, stacks automatically)
-local mainTab = app:CreateTab("Main")
-
--- 3. Add components
-mainTab:AddButton({
-	Info = {
-		Title = "Speed Boost",
-		Description = "Increases movement speed to 50."
-	},
-	InternalInfo = {
-		Toggle = true,
-		UniqueCommandId = "speed_boost_toggle",
-		Aliases = { "speed", "boost" }
-	},
-	Callback = function(enabled)
-		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.WalkSpeed = enabled and 50 or 16
-		end
-	end
+	SaveId = "default",
 })
 ```
 
+The defaults are:
+
+| Option | Default | Purpose |
+| :--- | :--- | :--- |
+| `Name` | `"Unnamed"` | Library name used in state and console output. |
+| `SaveFolder` | `""` | Optional folder for the JSON config. |
+| `SaveId` | `"config"` | Config file name without `.json`. |
+| `AccentColor` | built-in accent | Initial accent color. |
+| `TextColor` | built-in text color | Initial text color. |
+
+`Accent` and `Text` are accepted as aliases for `AccentColor` and `TextColor`.
+
+## 3. Create a tab
+
+```lua
+local mainTab = app:CreateTab("Main")
+```
+
+New tabs start minimized. Without a saved position or explicit position, they are stacked vertically from the top-left area.
+
+```lua
+local settingsTab = app:CreateTab(
+	"Settings Copy",
+	UDim2.new(0, 260, 0, 80)
+)
+```
+
+<Note>
+Saved tab positions take precedence over `defaultPosition`. Positions are clamped to the available viewport and can use the library's grid snapping settings.
+</Note>
+
+## 4. Add a component
+
+A simple action button:
+
+```lua
+mainTab:AddButton({
+	Info = {
+		Title = "Print Hello",
+		Description = "Print a test message.",
+	},
+	Callback = function()
+		print("Hello, world!")
+	end,
+})
+```
+
+A stateful toggle:
+
+```lua
+mainTab:AddButton({
+	Info = {
+		Title = "Speed Boost",
+		Description = "Switch between WalkSpeed 16 and 50.",
+	},
+	InternalInfo = {
+		Toggle = true,
+		UniqueCommandId = "speed_boost",
+		Aliases = { "speed", "boost" },
+	},
+	Callback = function(enabled)
+		local player = game.Players.LocalPlayer
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+
+		if humanoid then
+			humanoid.WalkSpeed = enabled and 50 or 16
+		end
+	end,
+})
+```
+
+<Check>
+Use a stable `UniqueCommandId` for controls that you want to address consistently from Quick Commands, keybinds, or saved configuration.
+</Check>
+
+## 5. Build a small real-world example
+
+This example combines a slider, input, selection, and a toggle:
+
+```lua
+local ui = Library.new({
+	Name = "Demo",
+	SaveFolder = "DemoConfig",
+	SaveId = "main",
+	AccentColor = Color3.fromRGB(0, 170, 255),
+})
+
+local tab = ui:CreateTab("Demo")
+
+tab:AddLabel({
+	Text = "Character Controls",
+	TextSize = 15,
+})
+
+tab:AddSlider({
+	Info = { Title = "WalkSpeed" },
+	InternalInfo = {
+		UniqueCommandId = "walkspeed",
+		Aliases = { "ws", "speed" },
+	},
+	Min = 16,
+	Max = 100,
+	Default = 16,
+	Step = 1,
+	Save = true,
+	Callback = function(value)
+		local character = game.Players.LocalPlayer.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = value
+		end
+	end,
+})
+
+tab:AddInput({
+	Info = { Title = "Message" },
+	DefaultText = "Hello",
+	InternalInfo = {
+		UniqueCommandId = "message",
+		Aliases = { "msg" },
+	},
+	Callback = function(text)
+		print("Message:", text)
+	end,
+})
+
+local target = tab:AddSelection({
+	Info = { Title = "Target" },
+	SingleSelect = true,
+	DefaultValue = "Nearest",
+	InternalInfo = {
+		UniqueCommandId = "target",
+		Aliases = { "dest" },
+	},
+	Callback = function(value)
+		print("Selected:", value)
+	end,
+})
+
+target:AddOption({ Info = { Title = "Nearest" }, Value = "Nearest" })
+target:AddOption({ Info = { Title = "Self" }, Value = "Self" })
+```
+
+## 6. Customize the theme
+
+Set colors when creating the application or change them later:
+
+```lua
+app:SetTheme({
+	Accent = Color3.fromRGB(170, 0, 255),
+	Text = Color3.fromRGB(240, 240, 240),
+})
+
+-- Individual updates are also available.
+app:SetAccentColor(Color3.fromRGB(0, 200, 255))
+app:SetTextColor(Color3.fromRGB(255, 255, 255))
+```
+
+## 7. Use Quick Commands
+
+Quick Commands opens with **F2** by default.
+
+```text
+ws 90
+speed on
+message hello from the command palette
+```
+
+Press **Tab** to complete the top matching command and **Enter** to execute it.
+
 <CardGroup cols={2}>
 	<Card title="Application API" icon="cube" href="/api-reference/app">
-		Learn how to configure the root application, manage tabs, and toggle visibility.
+		Configure the library, global visibility, themes, tabs, and command export.
+	</Card>
+	<Card title="Component API" icon="blocks" href="/api-reference/tab">
+		See every tab builder and the returned component handles.
 	</Card>
 	<Card title="Quick Commands" icon="terminal" href="/features/quick-commands">
-		Explore the built-in search palette, aliases, and argument system.
+		Learn matching rules, aliases, autocomplete, and component-specific arguments.
+	</Card>
+	<Card title="Persistence" icon="folder" href="/features/configuration">
+		Understand saved config files, keybinds, tab state, and slider persistence.
 	</Card>
 </CardGroup>

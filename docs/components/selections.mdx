@@ -1,120 +1,188 @@
 ---
-title: "Selections & Flyouts"
-description: "Single-select dropdown pickers and nested sub-menu panels."
+title: "Selections"
+description: "Build single-select pickers or nested component flyouts."
 ---
 
-Selections open a secondary `moreScroll` panel beside the tab. Flyouts detect screen boundaries automatically and flip to the left if near the edge of the monitor.
+`AddSelection()` creates a row with a flyout. With `SingleSelect = true`, the flyout behaves as a picker; without it, the component is most useful as a nested menu container.
 
-## Single-Select Dropdown
+## Single-select picker
 
 ```lua
-local picker = tab:AddSelection({
+local target = tab:AddSelection({
 	Info = {
-		Title = "Select Destination",
-		Description = "Choose a waypoint from the flyout list."
+		Title = "Target",
+		Description = "Choose which target to use.",
 	},
 	SingleSelect = true,
-	DefaultValue = "Spawn",
+	DefaultValue = "Nearest",
 	InternalInfo = {
-		UniqueCommandId = "destination_picker",
-		Aliases = { "dest", "waypoint" }
+		UniqueCommandId = "target",
+		Aliases = { "dest" },
 	},
-	Callback = function(selectedOption)
-		print("Selected:", selectedOption)
-	end
+	Callback = function(value)
+		print("Selected:", value)
+	end,
 })
 
-picker:AddOption({ Info = { Title = "Spawn Point" }, Value = "Spawn" })
-picker:AddOption({ Info = { Title = "Shop Area" }, Value = "Shop" })
-picker:AddOption({ Info = { Title = "Bank Vault" }, Value = "Vault" })
+target:AddOption({ Info = { Title = "Nearest" }, Value = "Nearest" })
+target:AddOption({ Info = { Title = "Self" }, Value = "Self" })
+target:AddOption({ Info = { Title = "Last Target" }, Value = "LastTarget" })
 ```
 
-## Nested Sub-Menu
-
-Selections can also hold nested buttons, sliders, and inputs, creating full secondary sub-menus:
+`SingleSelect` can be supplied as either:
 
 ```lua
-local subMenu = tab:AddSelection({
-	Info = { Title = "ESP Configuration" }
+SingleSelect = true
+```
+
+or:
+
+```lua
+InternalInfo = { SingleSelect = true }
+```
+
+## Option callbacks
+
+An option can supply its own callback:
+
+```lua
+target:AddOption({
+	Info = { Title = "Nearest" },
+	Value = "Nearest",
+	Callback = function(optionEnabled, selectionValue)
+		print(optionEnabled, selectionValue)
+	end,
+})
+```
+
+For single-select selections, the library stores the selected option `Value` and clears the stored value when that option is turned off.
+
+## Nested submenu
+
+A non-single-select selection can act as a lightweight submenu that contains other components:
+
+```lua
+local settings = tab:AddSelection({
+	Info = { Title = "ESP Configuration" },
+	InternalInfo = { UniqueCommandId = "esp_config" },
 })
 
-subMenu:AddLabel("Visual Settings")
+settings:AddLabel("Visual Settings")
 
-subMenu:AddButton({
+settings:AddButton({
 	Info = { Title = "Show Tracers" },
-	InternalInfo = { Toggle = true, UniqueCommandId = "esp_tracers" },
-	Callback = function(state) print("Tracers:", state) end
+	InternalInfo = { Toggle = true },
+	Callback = function(enabled)
+		print("Tracers:", enabled)
+	end,
 })
 
-subMenu:AddSlider({
+settings:AddSlider({
 	Info = { Title = "Max Distance" },
 	Min = 100,
 	Max = 3000,
 	Default = 1000,
-	Callback = function(dist) print("Distance:", dist) end
+	Callback = function(distance)
+		print("Distance:", distance)
+	end,
+})
+
+settings:AddTextBox({
+	Info = { Title = "Filter" },
+	DefaultText = "All",
+	Callback = function(text)
+		print("Filter:", text)
+	end,
 })
 ```
 
----
-
-## Parameters
+## Configuration
 
 <ParamField path="Info.Title" type="string" default='"Selection"'>
-	Text displayed on the selection row.
+Text shown on the parent row.
 </ParamField>
 
 <ParamField path="Info.Description" type="string" optional>
-	Tooltip text shown on hover.
+Tooltip text shown while hovering the row.
 </ParamField>
 
 <ParamField path="SingleSelect" type="boolean" default="false">
-	When `true`, choosing one option automatically deselects the others (dropdown-style). When `false`, options behave as an independent multi-toggle sub-menu.
+Enables single-select picker semantics.
 </ParamField>
 
 <ParamField path="DefaultValue" type="any" optional>
-	Initial selected value when `SingleSelect = true`.
+Initial stored selection value.
+</ParamField>
+
+<ParamField path="InternalInfo.SingleSelect" type="boolean" optional>
+Alias for `SingleSelect`.
 </ParamField>
 
 <ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
-	Stable identifier used for saved keybinds, startup state, and Quick Commands lookup.
+Stable command ID. A random ID is generated when omitted.
 </ParamField>
 
 <ParamField path="InternalInfo.Bindable" type="boolean" default="false">
-	When `true`, right-clicking the selection row opens a context menu to assign a keyboard shortcut.
+Adds a right-click menu for assigning or removing a keybind. The bound callback invokes the current selection callback path.
 </ParamField>
 
 <ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
-	When `true`, right-clicking opens a context menu option to auto-run this selection on script start.
+Adds a persisted startup flag to the context menu. The current selection implementation does not automatically execute the selection callback from that flag during initialization.
 </ParamField>
 
-<ParamField path="InternalInfo.Aliases" type="string[]" default="{}">
-	Alternate names this selection responds to in Quick Commands.
+<ParamField path="Aliases" type="string[]" optional>
+Alternate Quick Commands names. `Info.Aliases` and `InternalInfo.Aliases` are also recognized.
 </ParamField>
 
 <ParamField path="Callback" type="function" optional>
-	Called when the selection row itself is activated (not an individual option). Receives the current value.
+Clicking the parent row calls the current selection callback. In Quick Commands, the selected value is passed first and any remaining arguments are forwarded afterward.
 </ParamField>
 
----
+## Quick Commands
 
-## Selection Object Methods
+A selection command can match an option by `Value` or display title. The matcher checks exact, prefix, and substring matches, trying longer multi-word prefixes before shorter ones.
 
-The object returned by `:AddSelection()` exposes the following:
-
-```lua
-local picker = tab:AddSelection({ ... })
-
-picker:AddOption({ Info = { Title = "Spawn" }, Value = "Spawn" })	-- Adds a selectable option (single-select flows)
-picker:AddButton({ ... })											-- Adds a nested action/toggle button (multi flows)
-picker:AddSlider({ ... })											-- Adds a nested slider
-picker:AddTextBox({ ... })											-- Adds a nested text input
-picker:AddLabel("Section header")									-- Adds a nested static label
-
-local current = picker:GetValue()			-- Returns the currently selected value
-picker:SetValue("Vault")					-- Programmatically sets the selected value
-picker:UpdateSummary("2 selected")			-- Appends custom summary text after the title
+```text
+dest Nearest
+dest Last Target
 ```
 
+Arguments remaining after the matched option are forwarded to the selection callback:
+
+```text
+player Builderman
+```
+
+For a single-select selection, invoking the command with no arguments advances to the next option.
+
+## Selection handle
+
+```lua
+local target = tab:AddSelection({
+	Info = { Title = "Target" },
+	SingleSelect = true,
+	DefaultValue = "Nearest",
+})
+
+target:AddOption({ Info = { Title = "Nearest" }, Value = "Nearest" })
+target:AddOption({ Info = { Title = "Self" }, Value = "Self" })
+
+print(target:GetValue())
+target:SetValue("Self")
+target:UpdateSummary("Current target")
+```
+
+| Method | Behavior |
+| :--- | :--- |
+| `getValue()` / `GetValue()` | Returns the stored selection value. |
+| `SetValue(value)` | Stores a value and updates the parent selected visual state. It does not click an option for you. |
+| `UpdateSummary(text)` | Replaces the displayed summary with `<title> - <text>`. |
+| `AddButton(config)` | Adds a child button. In single-select mode it behaves as an option and returns the option handle. Otherwise it returns the selection handle for chaining. |
+| `AddOption(config)` | Adds a single-select-style child option and returns a small `{ UpdateSummary = ... }` option handle. |
+| `AddTextBox(config)` | Adds a nested text input and returns the selection handle. |
+| `AddSlider(config)` | Adds a nested slider and returns the selection handle. |
+| `AddLabel(config)` | Adds a nested label and returns the selection handle. |
+
 <Note>
-	`AddOption` is the recommended entry point for single-select dropdowns and also works for `SingleSelect = false` flows. `AddButton`, `AddSlider`, `AddTextBox`, and `AddLabel` are lower-level builders primarily intended for constructing nested sub-menus (as shown above), and mirror the config shape of their standalone `tab:Add...` counterparts.
+For nested options, the library reads the option's `Value`, display title, callback, and an optional `InternalInfo.UniqueCommandId`. Other component flags are not propagated from the option config.
 </Note>

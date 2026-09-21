@@ -1,111 +1,146 @@
 ---
-title: "Textboxes & Inputs"
-description: "Text input fields with submit triggers or stateful toggle modes."
+title: "Inputs"
+description: "Collect text with standard submit inputs or toggle inputs."
 ---
 
-Inputs combine a text box with an adjacent action or toggle button.
+`AddInput()` creates a text box paired with an action button. `AddTextBox()` and `AddTextbox()` are exact aliases of the same builder.
 
-## Action Input
-
-Pressing the submit button (or hitting `Enter` inside the textbox) passes the text string to the callback:
+## Standard input
 
 ```lua
-tab:AddInput({
+local input = tab:AddInput({
 	Info = {
-		Title = "Teleport",
-		Description = "Type a player username to teleport."
+		Title = "Message",
+		Description = "Text sent to the callback.",
 	},
-	DefaultText = "Username",
+	DefaultText = "Hello",
 	InternalInfo = {
-		UniqueCommandId = "goto_player",
-		Aliases = { "goto", "tp" }
+		UniqueCommandId = "message",
+		Aliases = { "msg" },
 	},
 	Callback = function(text)
-		print("Target:", text)
-	end
+		print("Message:", text)
+	end,
 })
 ```
 
-## Toggle Input
+Clicking the action button calls `Callback(text)`. Pressing **Enter** in the text box also submits the current text.
 
-Set `InternalInfo.Toggle = true`. When toggled **on**, it passes the string; when toggled **off**, it passes `nil`. Editing text while active immediately calls the callback with the updated value.
+## Toggle input
+
+Set `InternalInfo.Toggle = true` to use the adjacent button as a boolean toggle:
 
 ```lua
 tab:AddInput({
 	Info = {
-		Title = "Chat Spammer",
-		Description = "Periodically sends the entered text to chat."
+		Title = "Prefix",
+		Description = "Enable a custom chat prefix.",
 	},
-	DefaultText = "Hello World!",
+	DefaultText = "[VIP]",
 	InternalInfo = {
 		Toggle = true,
-		UniqueCommandId = "chat_spammer",
-		Aliases = { "spam" }
+		UniqueCommandId = "prefix",
+		Aliases = { "tag" },
 	},
-	Callback = function(text)
-		if text then
-			print("Spamming:", text)
-		else
-			print("Stopped spamming.")
-		end
-	end
+	Callback = function(enabled, text)
+		print(enabled, text)
+	end,
 })
 ```
 
-<Note>
-	Toggle mode is set via `InternalInfo.Toggle`, not a top-level `Toggle` field. There is no separate `AddToggleInput` method — always call `tab:AddInput(config)`.
-</Note>
+Toggle callbacks receive **two arguments**: `Callback(state, text)`.
 
----
+The behavior is:
 
-## Parameters
+| Action | Callback |
+| :--- | :--- |
+| Click toggle button | `Callback(newState, currentText)` |
+| Press Enter while enabled | `Callback(true, currentText)` |
+| Press Enter while disabled | No callback execution |
 
-<ParamField path="Info.Title" type="string" default='"Submit" (or "Toggle" if InternalInfo.Toggle is true)'>
-	Text displayed on the adjacent action/toggle button.
+## Configuration
+
+<ParamField path="Info.Title" type="string" default='"Submit" (or "Toggle")'>
+Text displayed on the action half of the control.
 </ParamField>
 
 <ParamField path="Info.Description" type="string" optional>
-	Tooltip text shown on hover.
+Tooltip text displayed when the pointer rests over the action area.
 </ParamField>
 
 <ParamField path="DefaultText" type="string" default='""'>
-	Initial text populating the textbox.
-</ParamField>
-
-<ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
-	Stable identifier used for saved keybinds, startup state, and Quick Commands lookup.
+Initial textbox value.
 </ParamField>
 
 <ParamField path="InternalInfo.Toggle" type="boolean" default="false">
-	When `true`, the adjacent button becomes a toggle. `Callback` receives the textbox text while on, and `nil` while off.
+Enables two-argument toggle behavior.
+</ParamField>
+
+<ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
+Stable Quick Commands ID. A random ID is generated when omitted.
 </ParamField>
 
 <ParamField path="InternalInfo.Bindable" type="boolean" default="false">
-	When `true`, right-clicking opens a context menu to assign a keyboard shortcut that activates the input.
+Adds a right-click menu for assigning or removing a keyboard shortcut.
 </ParamField>
 
 <ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
-	When `true`, right-clicking opens a context menu option to auto-run this input on script start.
+Adds a persisted startup flag to the context menu. The current input implementation does not execute the input callback automatically from that flag on startup.
 </ParamField>
 
-<ParamField path="InternalInfo.Aliases" type="string[]" default="{}">
-	Alternate names this input responds to in Quick Commands.
+<ParamField path="Aliases" type="string[]" optional>
+Alternate Quick Commands names. `Info.Aliases` and `InternalInfo.Aliases` are also accepted.
 </ParamField>
 
-<ParamField path="Callback" type="function" required>
-	Called when the input is submitted (`Enter` or button click). Receives the entered text, or `(text | nil)` in toggle mode.
+<ParamField path="Callback" type="function" optional>
+Standard input: `Callback(text)`. Toggle input: `Callback(state, text)`.
 </ParamField>
 
----
+## Quick Commands
 
-## Input Object Methods
+Standard input concatenates all arguments into the textbox value:
 
-The object returned by `:AddInput()` exposes the following helpers:
+```text
+message hello from quick commands
+```
+
+Toggle input supports an optional state prefix:
+
+```text
+prefix on [VIP]
+prefix off [VIP]
+prefix [VIP]
+```
+
+The explicit forms `on`, `true`, `1`, `off`, and `false` are recognized. Without a state prefix, the supplied arguments replace the textbox text and enable the toggle.
+
+## Returned handle
 
 ```lua
-local input = tab:AddInput({ ... })
+local input = tab:AddInput({
+	Info = { Title = "Message" },
+	Callback = function(text)
+		print(text)
+	end,
+})
 
-local text = input:getValue()		-- Returns the current textbox contents
-local id = input:getId()			-- Returns the resolved UniqueCommandId
-local isOn = input:isToggled()		-- Returns the toggle state (Toggle mode only)
+print(input:getId())
+print(input:getValue())
+print(input:isToggled())
+```
+
+| Method | Result |
+| :--- | :--- |
+| `getValue()` | Current textbox text. |
+| `getId()` | Resolved command ID. |
+| `isToggled()` | `true` only when the input is a toggle whose stored state is enabled. |
+
+## Aliases
+
+These three builders are equivalent:
+
+```lua
+tab:AddInput(config)
+tab:AddTextBox(config)
+tab:AddTextbox(config)
 ```

@@ -1,36 +1,132 @@
 ---
 title: "Tab API"
-description: "Reference for adding components and managing floating window tabs."
+description: "Add components to floating tabs and work with component handles."
 ---
 
-Each tab is an independent floating window with its own collapse state, dynamic scrolling frame, and context menus.
+A `Tab` is a draggable, collapsible floating window. Each tab owns its component list, flyout area, saved position, and minimized state.
 
-## Component Builders
+## Component builders
 
-| Method | Description |
-| :--- | :--- |
-| [`tab:AddButton(config)`](/components/buttons) | Adds a clickable action button or toggle switch. |
-| [`tab:AddSlider(config)`](/components/sliders) | Adds an interactive numeric or boolean slider. |
-| [`tab:AddInput(config)`](/components/inputs) | Adds a text input with action submit or toggle mode. |
-| [`tab:AddSelection(config)`](/components/selections) | Adds a dropdown picker or a nested sub-menu flyout. |
-| [`tab:AddLabel(config)`](/components/labels) | Adds a static text label or section divider. |
-
----
-
-## Utility Methods
-
-### `tab:GetFrame()`
-
-Returns the root `TextLabel` instance of the tab header.
+| Method | Returns | Purpose |
+| :--- | :--- | :--- |
+| `tab:AddButton(config)` | Button handle | One-shot action or boolean toggle. |
+| `tab:AddSlider(config)` | Slider handle | Numeric or boolean slider. |
+| `tab:AddInput(config)` | Input handle | Text submission or toggle input. |
+| `tab:AddTextBox(config)` | Input handle | Alias of `AddInput`. |
+| `tab:AddTextbox(config)` | Input handle | Alias of `AddInput`. |
+| `tab:AddSelection(config)` | Selection handle | Single-select picker or nested flyout container. |
+| `tab:AddLabel(config)` | Label handle | Static text row. |
 
 ```lua
-local frame = tab:GetFrame()
+local tab = app:CreateTab("Main")
+
+tab:AddLabel("Player")
+tab:AddButton({ Info = { Title = "Heal" } })
+tab:AddSlider({ Info = { Title = "WalkSpeed" }, Min = 16, Max = 100, Default = 16 })
+tab:AddInput({ Info = { Title = "Message" } })
+tab:AddSelection({ Info = { Title = "Target" } })
 ```
 
-### `tab:closeMore()`
+<Note>
+The implementation accepts an internal second parameter (`pOverride`) on component builders when the library renders nested flyouts. Normal application code should omit it.
+</Note>
 
-Closes any currently active flyout panel attached to this tab.
+## `tab:GetFrame()`
+
+Returns the tab header `TextLabel` instance.
+
+```lua
+local header = tab:GetFrame()
+header.TextSize = 20
+```
+
+## `tab:closeMore()`
+
+Closes the tab's currently open flyout.
 
 ```lua
 tab:closeMore()
 ```
+
+## Component handles
+
+Component builders return small Lua tables rather than exposing an entire Roblox GUI hierarchy. The exact handles are documented on each component page.
+
+<AccordionGroup>
+<Accordion title="Button handle">
+
+```lua
+button.frame
+button.button
+button.text
+button.isToggle
+button:getValue()
+button:getId()
+button:updateText()
+button.setVisualState(state)
+button.activate()
+```
+
+</Accordion>
+<Accordion title="Input handle">
+
+```lua
+input:getValue()
+input:getId()
+input:isToggled()
+```
+
+</Accordion>
+<Accordion title="Slider handle">
+
+```lua
+slider:getValue()
+slider:getId()
+slider:setValue(value)
+```
+
+</Accordion>
+<Accordion title="Selection handle">
+
+```lua
+selection:getValue()
+selection:GetValue()
+selection:SetValue(value)
+selection:UpdateSummary(text)
+selection:AddButton(config)
+selection:AddOption(config)
+selection:AddTextBox(config)
+selection:AddSlider(config)
+selection:AddLabel(config)
+```
+
+</Accordion>
+<Accordion title="Label handle">
+
+```lua
+label.frame
+label.textLabel
+label:SetText(text)
+label:GetText()
+```
+
+</Accordion>
+</AccordionGroup>
+
+## Complete tab surface
+
+The user-facing tab API is:
+
+```text
+tab:AddButton(config)
+tab:AddInput(config)
+tab:AddTextBox(config)  -- alias
+tab:AddTextbox(config)  -- alias
+tab:AddSelection(config)
+tab:AddSlider(config)
+tab:AddLabel(config)
+tab:GetFrame()
+tab:closeMore()
+```
+
+The methods `openMore()` and `buildContextMenu()` are implementation helpers used by built-in flyouts and are intentionally not treated as stable application API.

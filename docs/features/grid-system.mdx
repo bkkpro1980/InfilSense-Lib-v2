@@ -1,26 +1,44 @@
 ---
 title: "Grid Snapping & Bounds"
-description: "Magnetic window positioning and responsive screen boundary detection."
+description: "Understand tab dragging, magnetic snapping, screen clamping, and flyout positioning."
 ---
 
-## Magnetic Grid Snapping
+Tabs use Roblox's native `UIDragDetector` with pixel-offset positioning. The library adds a grid constraint and viewport-aware clamping on top of the native drag behavior.
 
-Tabs utilize a native `UIDragDetector` constraint function. As you drag a tab across the screen, it snaps in real-time to the nearest grid increment (default: **15px**).
+## Grid snapping
 
-When you release the drag, the tab locks into position and automatically saves its coordinates to the configuration file on disk.
+Grid snapping is enabled by default with a **15 pixel** grid:
 
-### Configuring the Grid
+```text
+Settings.GridSnap = true
+Settings.GridSize = 15
+```
 
-Users can adjust or disable grid snapping at any time in the auto-created **Settings** tab:
-- **Grid Snapping Toggle**: Enables or disables magnetic constraint snapping.
-- **Grid Snap Size Slider**: Adjusts the grid step between 5px and 30px.
+During a drag, X and Y offsets are rounded to the nearest grid multiple. When the drag ends, the final position is snapped again and stored in `TabPositions`.
 
----
+## Built-in settings
 
-## Screen Bounds & Inset Protection
+The automatic `Settings` tab includes:
 
-Tabs remain locked to absolute pixel offsets without distortion when resizing the Roblox client:
-- **Roblox Topbar Inset**: Tabs automatically offset below the Roblox Topbar using `GuiService:GetGuiInset().Y`.
-- **Window Resize Clamping**: When the client window is resized smaller, tabs clamp within the viewport to prevent getting lost off-screen.
-- **Flyout Flipping**: When a tab is positioned close to the right edge of the screen, its `moreScroll` dropdown automatically flips to the left.
-- **Tooltip Flipping**: Tooltips flip horizontally or vertically when hovering near screen borders.
+| Control | Behavior |
+| :--- | :--- |
+| **Grid Snapping** | Enables or disables magnetic snapping. |
+| **Grid Snap Size** | Selects 5–30 px in 5 px increments. |
+| **Reset Tab Positions** | Clears saved tab position/state and restores the initial stack. |
+
+The selected grid settings persist through the JSON configuration file.
+
+## Screen bounds
+
+Tab placement is constrained so that headers remain reachable:
+
+- The Roblox GUI inset is included in the safe top boundary.
+- Horizontal placement is clamped inside the viewport.
+- A bottom safety margin is reserved.
+- Existing tabs are re-clamped when the viewport size changes.
+
+## Flyouts
+
+Selection and context-menu flyouts are positioned beside the source tab. When the right side has insufficient room, they flip to the left. Their height is limited by the available screen space.
+
+Tooltips use similar boundary-aware placement and can flip horizontally or vertically near screen edges.

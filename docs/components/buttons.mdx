@@ -1,103 +1,151 @@
 ---
 title: "Buttons & Toggles"
-description: "Standard action triggers and stateful toggle switches."
+description: "Create one-shot actions and stateful boolean controls."
 ---
 
-Buttons can function as one-click action triggers or persistent stateful toggles.
+Buttons register with Quick Commands automatically. By default they execute once; `InternalInfo.Toggle = true` turns the same component into a boolean toggle.
 
-## Action Button
+## Action button
 
 ```lua
 tab:AddButton({
 	Info = {
 		Title = "Respawn",
-		Description = "Resets character humanoid health."
+		Description = "Reset the local humanoid health.",
 	},
 	InternalInfo = {
-		Aliases = { "re", "reset" }
+		UniqueCommandId = "respawn",
+		Aliases = { "re", "reset" },
 	},
 	Callback = function()
-		local hum = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then hum.Health = 0 end
-	end
+		local player = game.Players.LocalPlayer
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			humanoid.Health = 0
+		end
+	end,
 })
 ```
 
-## Toggle Button
+A normal button callback receives no arguments.
 
-Setting `InternalInfo.Toggle = true` adds a vertical accent indicator and gradient background when active.
+## Toggle button
 
 ```lua
 tab:AddButton({
 	Info = {
 		Title = "Noclip",
-		Description = "Walk through solid barriers."
+		Description = "Toggle the local noclip feature.",
 	},
 	InternalInfo = {
 		Toggle = true,
-		Bindable = true,			-- Enables right-click keybind assignment
-		StartupAvailable = true,	-- Enables right-click run-on-startup
-		UniqueCommandId = "noclip_cmd",
-		Aliases = { "nc" }
+		UniqueCommandId = "noclip",
+		Bindable = true,
+		StartupAvailable = true,
+		Aliases = { "nc" },
 	},
 	Callback = function(enabled)
-		print("Noclip state:", enabled)
-	end
+		print("Noclip:", enabled)
+	end,
 })
 ```
 
-### Context Menu (Right-Click)
+Toggle callbacks receive the new boolean state.
 
-When `Bindable = true` or `StartupAvailable = true`, right-clicking the button opens a context flyout:
-- **Assign Keybind**: Prompts for any key on your keyboard.
-- **Toggle Startup**: Automatically executes this toggle with `true` every time the script runs.
-
----
-
-## Parameters
+## Configuration
 
 <ParamField path="Info.Title" type="string" default='"Button"'>
-	Text displayed on the button.
+Button title. For toggles this is also the displayed toggle label.
 </ParamField>
 
 <ParamField path="Info.Description" type="string" optional>
-	Tooltip text shown on hover.
+Tooltip text displayed after the pointer rests over the control for about one second.
 </ParamField>
 
 <ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
-	Stable identifier used for saved keybinds, startup state, and Quick Commands lookup. A random ID is generated if omitted, but a stable ID is required for `Bindable`/`StartupAvailable` to persist correctly across sessions.
+Stable command ID. A random ID is generated when omitted.
 </ParamField>
 
 <ParamField path="InternalInfo.Toggle" type="boolean" default="false">
-	When `true`, the button behaves as a stateful toggle instead of a one-shot action, and `Callback` receives the new boolean state.
+Turns the action button into a stateful boolean toggle.
 </ParamField>
 
 <ParamField path="InternalInfo.Bindable" type="boolean" default="false">
-	When `true`, right-clicking the button opens a context menu to assign a keyboard shortcut.
+Adds a right-click menu for assigning or removing a keyboard shortcut.
 </ParamField>
 
 <ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
-	When `true`, right-clicking the button opens a context menu option to auto-run it (with state `true`) every time the script loads.
+Adds a right-click **Toggle Startup** option. For buttons, a saved startup flag executes the callback with `true` during the next library initialization.
 </ParamField>
 
-<ParamField path="InternalInfo.Aliases" type="string[]" default="{}">
-	Alternate names this button responds to in Quick Commands.
+<ParamField path="Aliases" type="string[]" optional>
+Alternate Quick Commands names. `Info.Aliases` and `InternalInfo.Aliases` are also recognized.
 </ParamField>
 
-<ParamField path="Callback" type="function" required>
-	Called on activation. Receives `(state: boolean)` when `Toggle = true`, otherwise called with no arguments.
+<ParamField path="Callback" type="function" optional>
+Normal button: `Callback()`. Toggle button: `Callback(state)`.
 </ParamField>
 
----
+## Quick Commands
 
-## Button Object Methods
+Normal buttons are invoked by command name or alias:
 
-The object returned by `:AddButton()` exposes the following helpers:
+```text
+respawn
+re
+```
+
+Toggle buttons accept an explicit state or flip when no state is supplied:
+
+```text
+noclip on
+noclip off
+noclip true
+noclip false
+noclip
+```
+
+## Right-click actions
+
+When `Bindable` or `StartupAvailable` is enabled, right-clicking the button opens its flyout.
+
+- **Assign a New Keybind** stores the selected keyboard key by command ID.
+- **Remove Keybind** clears the saved binding.
+- **Toggle Startup** stores the startup flag.
+
+## Returned handle
+
+`AddButton()` returns a handle with both GUI references and control methods:
 
 ```lua
-local btn = tab:AddButton({ ... })
+local button = tab:AddButton({
+	Info = { Title = "Example" },
+	InternalInfo = { Toggle = true },
+	Callback = function(state)
+		print(state)
+	end,
+})
 
-btn:setVisualState(true)	-- Manually updates visual indicator & gradient
-local val = btn:getValue()	-- Returns active boolean state
-btn:activate()				-- Simulates an activation click
+print(button:getId())
+print(button:getValue())
+
+button.setVisualState(true)
+button.activate()
 ```
+
+| Member | Behavior |
+| :--- | :--- |
+| `frame` | Outer `Frame` instance. |
+| `button` | Clickable `ImageButton`. |
+| `text` | Title `TextLabel`. |
+| `isToggle` | Boolean indicating toggle mode. |
+| `getValue()` | Current stored state. Normal buttons usually remain `false`; toggles return a boolean. |
+| `getId()` | Resolved command ID. |
+| `updateText()` | Refreshes the title and any saved keybind suffix. |
+| `setVisualState(state)` | Updates stored toggle state and visuals. |
+| `activate()` | Executes the button using the same callback path as a click. |
+
+<Warning>
+`activate()` and `setVisualState()` are convenient programmatic hooks, but they do not add new persistence semantics beyond what the component already implements.
+</Warning>
