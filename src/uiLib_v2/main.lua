@@ -174,8 +174,6 @@ function Library.new(config)
 		KeybindManager.setQuickCommandsToggle(Enum.KeyCode[qcKey])
 	end
 
-	QuickCommands.init()
-
 	State.isUiVisible = true
 	State.toggleTabs = function(forcedState)
 		if forcedState ~= nil then
@@ -224,6 +222,8 @@ function Library.new(config)
 	for key, color in pairs(initialTheme) do
 		applyThemeChannel(key, color)
 	end
+
+	QuickCommands.init()
 	
 	local app = {}
 

@@ -98,6 +98,46 @@ function QuickCommands.init()
 	UIBuilder.create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = resultsScroll })
 	local _listLayout = UIBuilder.create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2), Parent = resultsScroll })
 
+	local function applyTheme(themeType, newColor)
+		if not newColor then return end
+
+		if themeType == "background" then
+			container.BackgroundColor3 = newColor
+			inner.BackgroundColor3 = newColor
+			resultsScroll.BackgroundColor3 = newColor
+		elseif themeType == "hover" then
+			for _, child in ipairs(resultsScroll:GetChildren()) do
+				if child:IsA("Frame") then
+					child.BackgroundColor3 = newColor
+				end
+			end
+		elseif themeType == "text" then
+			searchBox.TextColor3 = newColor
+			for _, child in ipairs(resultsScroll:GetChildren()) do
+				if child:IsA("Frame") then
+					local button = child:FindFirstChildWhichIsA("TextButton")
+					if button and not button:GetAttribute("QuickCommandPrimary") then
+						button.TextColor3 = newColor
+					end
+				end
+			end
+		elseif themeType == "placeholder" then
+			searchBox.PlaceholderColor3 = newColor
+			autoCompleteLabel.TextColor3 = newColor
+		elseif themeType == "accent" then
+			for _, child in ipairs(resultsScroll:GetChildren()) do
+				if child:IsA("Frame") then
+					local button = child:FindFirstChildWhichIsA("TextButton")
+					if button and button:GetAttribute("QuickCommandPrimary") then
+						button.TextColor3 = newColor
+					end
+				end
+			end
+		end
+	end
+
+	State.onThemeChanged(applyTheme)
+
 	local function close()
 		overlay.Visible = false
 		searchBox.Text = ""
@@ -247,6 +287,7 @@ function QuickCommands.init()
 			if i == 1 then
 				currentFirstCommand = cmdData
 				currentFirstMatchedName = matchedKey
+				resBtn:SetAttribute("QuickCommandPrimary", true)
 				resBtn.TextColor3 = Constants.Colors.accent
 				
 				if #args == 0 and string.sub(matchedKey:lower(), 1, #queryCmd) == queryCmd then
