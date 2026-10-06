@@ -1,2 +1,3 @@
 build/
 darklua.exe
+tests/

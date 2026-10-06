@@ -1,9 +1,16 @@
 ---
 title: "Selections"
-description: "Build single-select pickers or nested component flyouts."
+description: "Build single-select or multi-select pickers with persistent values and startup execution."
 ---
 
-`AddSelection()` creates a row with a flyout. With `SingleSelect = true`, the flyout behaves as a picker; without it, the component is most useful as a nested menu container.
+`AddSelection()` creates a row with a flyout. A selection uses one of two picker modes:
+
+| Mode | Configuration | Stored value | Main callback |
+| :--- | :--- | :--- | :--- |
+| Single-select | `SingleSelect = true` or omitted | One value or `nil` | `Callback(value)` |
+| Multi-select | `MultiSelect = true` | Array of values | `Callback(values)` |
+
+**Single-select is the default.** You can omit `SingleSelect` entirely, or set `SingleSelect = true` explicitly. Set `MultiSelect = true` to opt into multi-select behavior. Enabling both `SingleSelect` and `MultiSelect` raises an error.
 
 ## Single-select picker
 
@@ -41,9 +48,81 @@ or:
 InternalInfo = { SingleSelect = true }
 ```
 
+The selected option is the option's `Value`. Turning the selected option off clears the stored value.
+
+## Multi-select picker
+
+```lua
+local features = tab:AddSelection({
+	Info = {
+		Title = "Features",
+		Description = "Choose every feature to enable.",
+	},
+	MultiSelect = true,
+	DefaultValue = { "ESP", "Tracers" },
+	InternalInfo = {
+		UniqueCommandId = "features",
+	},
+	Callback = function(values)
+		for _, value in ipairs(values) do
+			print("Selected:", value)
+		end
+	end,
+})
+
+features:AddOption({ Info = { Title = "ESP" }, Value = "ESP" })
+features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
+features:AddOption({ Info = { Title = "Chams" }, Value = "Chams" })
+```
+
+`MultiSelect` can also be supplied through `InternalInfo.MultiSelect`.
+
+The stored value is always an array. Selecting an option adds its `Value` to the array; turning it off removes that value. The order is the order in which values were selected.
+
+For multi-select option callbacks, the signature is:
+
+```lua
+Callback = function(optionEnabled, selectedValues)
+	print("Option state:", optionEnabled)
+	print("Selected count:", #selectedValues)
+end
+```
+
+## Selection modes
+
+Single-select is the default mode. These configurations are equivalent:
+
+```lua
+-- Default: single-select
+local target = tab:AddSelection({
+	Info = { Title = "Target" },
+})
+```
+
+```lua
+-- Explicit single-select
+local target = tab:AddSelection({
+	Info = { Title = "Target" },
+	SingleSelect = true,
+})
+```
+
+Use `MultiSelect = true` when multiple options may be selected at once:
+
+```lua
+local features = tab:AddSelection({
+	Info = { Title = "Features" },
+	MultiSelect = true,
+})
+```
+
+`SingleSelect` and `MultiSelect` are mutually exclusive. Do not enable both. `InternalInfo.SingleSelect` and `InternalInfo.MultiSelect` are aliases for the corresponding public flags.
+
+`AddButton()` acts like an option in both picker modes. Other flyout components such as text boxes, sliders, and labels can still be added when needed.
+
 ## Option callbacks
 
-An option can supply its own callback:
+An option can supply its own callback in either picker mode:
 
 ```lua
 target:AddOption({
@@ -55,46 +134,9 @@ target:AddOption({
 })
 ```
 
-For single-select selections, the library stores the selected option `Value` and clears the stored value when that option is turned off.
+For single-select, `selectionValue` is the selected value or `nil`.
 
-## Nested submenu
-
-A non-single-select selection can act as a lightweight submenu that contains other components:
-
-```lua
-local settings = tab:AddSelection({
-	Info = { Title = "ESP Configuration" },
-	InternalInfo = { UniqueCommandId = "esp_config" },
-})
-
-settings:AddLabel("Visual Settings")
-
-settings:AddButton({
-	Info = { Title = "Show Tracers" },
-	InternalInfo = { Toggle = true },
-	Callback = function(enabled)
-		print("Tracers:", enabled)
-	end,
-})
-
-settings:AddSlider({
-	Info = { Title = "Max Distance" },
-	Min = 100,
-	Max = 3000,
-	Default = 1000,
-	Callback = function(distance)
-		print("Distance:", distance)
-	end,
-})
-
-settings:AddTextBox({
-	Info = { Title = "Filter" },
-	DefaultText = "All",
-	Callback = function(text)
-		print("Filter:", text)
-	end,
-})
-```
+For multi-select, `selectionValue` is an array containing all selected values at that moment.
 
 ## Configuration
 
@@ -106,20 +148,32 @@ Text shown on the parent row.
 Tooltip text shown while hovering the row.
 </ParamField>
 
-<ParamField path="SingleSelect" type="boolean" default="false">
-Enables single-select picker semantics.
+<ParamField path="SingleSelect" type="boolean" optional>
+Enables single-select picker semantics. This is the default when `MultiSelect` is not enabled. Do not enable `MultiSelect` at the same time.
+</ParamField>
+
+<ParamField path="MultiSelect" type="boolean" default="false">
+Enables multi-select picker semantics. When `true`, this overrides the default single-select mode. The selection value is stored as an array. Do not enable `SingleSelect` at the same time.
 </ParamField>
 
 <ParamField path="DefaultValue" type="any" optional>
-Initial stored selection value.
+Initial value used when no saved value exists. Use a single value for `SingleSelect` and an array of values for `MultiSelect`.
+</ParamField>
+
+<ParamField path="Save" type="boolean" default="false">
+Persists the current selection value under `Settings[InternalInfo.UniqueCommandId]`. For multi-select selections, the saved value is an array. The saved value is restored on the next initialization.
 </ParamField>
 
 <ParamField path="InternalInfo.SingleSelect" type="boolean" optional>
 Alias for `SingleSelect`.
 </ParamField>
 
+<ParamField path="InternalInfo.MultiSelect" type="boolean" optional>
+Alias for `MultiSelect`.
+</ParamField>
+
 <ParamField path="InternalInfo.UniqueCommandId" type="string" optional>
-Stable command ID. A random ID is generated when omitted.
+Stable command ID. A random ID is generated when omitted. Provide a stable ID when using `Save` or startup persistence so saved data can be restored across runs.
 </ParamField>
 
 <ParamField path="InternalInfo.Bindable" type="boolean" default="false">
@@ -127,7 +181,11 @@ Adds a right-click menu for assigning or removing a keybind. The bound callback 
 </ParamField>
 
 <ParamField path="InternalInfo.StartupAvailable" type="boolean" default="false">
-Adds a persisted startup flag to the context menu. The current selection implementation does not automatically execute the selection callback from that flag during initialization.
+Adds a persisted **Toggle Startup** action to the context menu. In picker modes, enabling it runs the main selection callback during initialization using the restored value. Single-select passes one value; multi-select passes the restored array.
+</ParamField>
+
+<ParamField path="InternalInfo.Save" type="boolean" optional>
+Alias for `Save`.
 </ParamField>
 
 <ParamField path="Aliases" type="string[]" optional>
@@ -135,25 +193,88 @@ Alternate Quick Commands names. `Info.Aliases` and `InternalInfo.Aliases` are al
 </ParamField>
 
 <ParamField path="Callback" type="function" optional>
-Clicking the parent row calls the current selection callback. In Quick Commands, the selected value is passed first and any remaining arguments are forwarded afterward.
+Clicking the parent row calls the main selection callback. Single-select passes the current value. Multi-select passes an array of selected values. Quick Commands also pass the selected value or selected array first, followed by any remaining arguments.
 </ParamField>
+
+## Saved selection + startup
+
+Use `Save = true` with `InternalInfo.UniqueCommandId` and `StartupAvailable = true` to persist the picker value and optionally run it during startup.
+
+### Single-select startup
+
+```lua
+local target = tab:AddSelection({
+	Info = { Title = "Target" },
+	SingleSelect = true,
+	DefaultValue = "Nearest",
+	Save = true,
+	InternalInfo = {
+		UniqueCommandId = "target",
+		StartupAvailable = true,
+	},
+	Callback = function(value)
+		print("Selected at startup:", value)
+	end,
+})
+
+target:AddOption({ Info = { Title = "Nearest" }, Value = "Nearest" })
+target:AddOption({ Info = { Title = "Self" }, Value = "Self" })
+```
+
+### Multi-select startup
+
+```lua
+local features = tab:AddSelection({
+	Info = { Title = "Features" },
+	MultiSelect = true,
+	DefaultValue = { "ESP", "Tracers" },
+	Save = true,
+	InternalInfo = {
+		UniqueCommandId = "features",
+		StartupAvailable = true,
+	},
+	Callback = function(values)
+		print("Restored selections:", table.concat(values, ", "))
+	end,
+})
+
+features:AddOption({ Info = { Title = "ESP" }, Value = "ESP" })
+features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
+features:AddOption({ Info = { Title = "Chams" }, Value = "Chams" })
+```
+
+When **Toggle Startup** is enabled, the startup preference is stored as `Startup[commandId] = true`. The picker value is stored separately under `Settings[commandId]`.
+
+For example, a multi-select configuration can contain:
+
+```lua
+Startup["features"] = true
+Settings["features"] = {
+	"ESP",
+	"Tracers",
+}
+```
+
+On the next library initialization, the saved array is restored before the startup callback runs.
 
 ## Quick Commands
 
-A selection command can match an option by `Value` or display title. The matcher checks exact, prefix, and substring matches, trying longer multi-word prefixes before shorter ones.
+A selection command can match an option by `Value` or display title. The matcher checks exact, prefix, and substring matches, trying longer multi-word matches before shorter ones.
+
+For single-select selections, the first matched option is selected and any remaining arguments are forwarded to the callback.
+
+For multi-select selections, multiple options can be supplied as separate arguments or as a comma-separated list. The supplied options replace the current selected-value array for that command invocation, and any remaining arguments are forwarded afterward.
 
 ```text
 dest Nearest
 dest Last Target
+features ESP
+features ESP Tracers
+features ESP,Tracers
+features ESP,Tracers true
 ```
 
-Arguments remaining after the matched option are forwarded to the selection callback:
-
-```text
-player Builderman
-```
-
-For a single-select selection, invoking the command with no arguments advances to the next option.
+For a multi-select command with no option match, the existing selection is preserved and all arguments are forwarded to the callback. This makes commands such as `hide true` useful for applying an additional argument to the current selection.
 
 ## Selection handle
 
@@ -172,17 +293,33 @@ target:SetValue("Self")
 target:UpdateSummary("Current target")
 ```
 
+For multi-select:
+
+```lua
+local features = tab:AddSelection({
+	Info = { Title = "Features" },
+	MultiSelect = true,
+	DefaultValue = { "ESP" },
+})
+
+features:AddOption({ Info = { Title = "ESP" }, Value = "ESP" })
+features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
+
+local selected = features:GetValue()
+features:SetValue({ "ESP", "Tracers" })
+```
+
 | Method | Behavior |
 | :--- | :--- |
-| `getValue()` / `GetValue()` | Returns the stored selection value. |
-| `SetValue(value)` | Stores a value and updates the parent selected visual state. It does not click an option for you. |
+| `getValue()` / `GetValue()` | Returns the stored value. In multi-select mode, returns an array of selected values. |
+| `SetValue(value)` | Stores a value and updates the selected visuals. In multi-select mode, pass an array of values. |
 | `UpdateSummary(text)` | Replaces the displayed summary with `<title> - <text>`. |
-| `AddButton(config)` | Adds a child button. In single-select mode it behaves as an option and returns the option handle. Otherwise it returns the selection handle for chaining. |
-| `AddOption(config)` | Adds a single-select-style child option and returns a small `{ UpdateSummary = ... }` option handle. |
+| `AddButton(config)` | Adds a child button that behaves as an option in single- and multi-select modes, and returns the selection handle for chaining. |
+| `AddOption(config)` | Adds a picker option. The option's `Value` identifies the stored selection. |
 | `AddTextBox(config)` | Adds a nested text input and returns the selection handle. |
 | `AddSlider(config)` | Adds a nested slider and returns the selection handle. |
 | `AddLabel(config)` | Adds a nested label and returns the selection handle. |
 
 <Note>
-For nested options, the library reads the option's `Value`, display title, callback, and an optional `InternalInfo.UniqueCommandId`. Other component flags are not propagated from the option config.
+For picker options, the library reads the option's `Value`, display title, callback, and an optional `InternalInfo.UniqueCommandId`. Other component flags are not propagated from the option config.
 </Note>

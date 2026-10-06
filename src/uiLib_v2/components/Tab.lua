@@ -159,6 +159,7 @@ function Tab.create(tabName, defaultPosition)
 		Position = UDim2.new(0, 10, 0.5, 0),
 		Rotation = isMinimized and 180 or 0,
 		Image = isMinimized and "rbxassetid://11295291707" or "rbxassetid://11293980042",
+		Modal = true,
 		Parent = tab
 	})
 

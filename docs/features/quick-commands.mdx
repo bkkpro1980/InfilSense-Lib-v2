@@ -152,7 +152,20 @@ Arguments remaining after the selected option are forwarded:
 player Builderman
 ```
 
-For a single-select selection, invoking the command with no arguments advances to the next configured option.
+For a single-select selection, invoking the command with no arguments advances to the next configured option. For a multi-select selection, multiple options can be supplied as separate arguments or as a comma-separated list. The command replaces the selection with those values, then forwards any remaining arguments to the callback. The selection callback receives the selected value for single-select or the full selected-value array for multi-select.
+
+```text
+features ESP
+features ESP Tracers
+features ESP,Tracers
+features ESP,Tracers true
+hide g true
+hide g,w,v true
+void enemy,vip
+bring guard worker
+```
+
+For the command `hide` above, `g,w,v` is parsed as the MultiSelect value and `true` is forwarded as the remaining callback argument. `QuickCommands.lua` does not need to know which arguments are options; the Selection component parses its registered options and keeps the Quick Commands layer generic.
 
 ## Autocomplete
 

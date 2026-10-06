@@ -134,19 +134,42 @@ tab:AddInput({
 
 #### `tab:AddSelection(config)`
 ```lua
-local dropdown = tab:AddSelection({
+-- Single-select
+local target = tab:AddSelection({
 	Info = { Title = "Select Target", Description = "Selects active target" },
 	SingleSelect = true,
 	DefaultValue = "Option 1",
+	Save = true,
 	InternalInfo = {
 		UniqueCommandId = "target_select",
+		StartupAvailable = true,
 		Aliases = { "target" }
 	},
 	Callback = function(selectedOption) end
 })
 
-dropdown:AddOption({ Info = { Title = "Option 1" }, Value = "Option 1" })
-dropdown:AddOption({ Info = { Title = "Option 2" }, Value = "Option 2" })
+target:AddOption({ Info = { Title = "Option 1" }, Value = "Option 1" })
+target:AddOption({ Info = { Title = "Option 2" }, Value = "Option 2" })
+
+-- Multi-select
+local features = tab:AddSelection({
+	Info = { Title = "Features" },
+	MultiSelect = true,
+	DefaultValue = { "ESP" },
+	Save = true,
+	InternalInfo = {
+		UniqueCommandId = "features",
+		StartupAvailable = true,
+	},
+	Callback = function(selectedOptions)
+		print(table.concat(selectedOptions, ", "))
+	end
+})
+
+features:AddOption({ Info = { Title = "ESP" }, Value = "ESP" })
+features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
+-- Single-select is the default when neither mode flag is specified.
+-- SingleSelect and MultiSelect are mutually exclusive.
 ```
 
 #### `tab:AddLabel(config)`

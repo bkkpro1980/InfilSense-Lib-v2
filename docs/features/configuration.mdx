@@ -1,6 +1,6 @@
 ---
 title: "Configuration & Persistence"
-description: "Understand JSON storage for tabs, keybinds, startup flags, grid settings, and sliders."
+description: "Understand JSON storage for tabs, keybinds, startup flags, selection values, grid settings, and sliders."
 ---
 
 Configuration is loaded automatically by `Library.new()` and saved as controls change. Theme colors are configured through `Library.new({ Theme = ... })` or the runtime theme methods, but theme colors are not stored in the JSON configuration file. See [Theming](/features/theming) for the full theme API.
@@ -105,9 +105,13 @@ Controls with `StartupAvailable = true` expose a **Toggle Startup** action in th
 Startup["noclip"] = true
 ```
 
-The current bundle consumes that startup flag automatically for **buttons** by executing the button callback with `true` when the library initializes.
+The library consumes that startup flag automatically for supported components:
 
-For inputs, selections, and sliders, the context-menu flag is persisted but the component itself does not automatically execute its callback from that flag during initialization.
+- **Buttons** execute their callback with `true`.
+- **Single-select selections** execute their main callback with the restored value.
+- **Multi-select selections** execute their main callback with the restored array of values.
+
+For selections, opt into value persistence with `Save = true` (or `InternalInfo.Save = true`). Single-select values are stored under `Settings[commandId]` as one value; multi-select values are stored as an array. The startup preference remains under `Startup[commandId]`. If no saved value exists, `DefaultValue` is used. Picker selections should provide a stable `InternalInfo.UniqueCommandId` for persistence to work across runs. `SingleSelect` and `MultiSelect` cannot both be enabled. A selection defaults to single-select when `MultiSelect` is not enabled. Inputs and sliders currently expose the startup menu flag without automatically executing their callback from it during initialization.
 
 ## Saved sliders
 
@@ -131,6 +135,38 @@ Settings["camera_fov"] = 95
 ```
 
 The implementation also accepts `InternalInfo.Save = true` and `Settings = { save = true }` on the component config.
+
+### Saved selection values
+
+Selections persist their current picker value independently of the startup preference. Single-select stores one value, while multi-select stores an array:
+
+```lua
+local features = tab:AddSelection({
+	Info = { Title = "Features" },
+	MultiSelect = true,
+	DefaultValue = { "ESP" },
+	Save = true,
+	InternalInfo = {
+		UniqueCommandId = "features",
+		StartupAvailable = true,
+	},
+	Callback = function(values)
+		print(table.concat(values, ", "))
+	end,
+})
+
+features:AddOption({ Info = { Title = "ESP" }, Value = "ESP" })
+features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
+```
+
+The resulting configuration can contain:
+
+```text
+Startup["features"] = true
+Settings["features"] = { "ESP", "Tracers" }
+```
+
+With startup enabled, the callback receives a copy of the restored array during initialization. When the user changes the selection, the new value replaces the saved value.
 
 ## Grid settings
 
