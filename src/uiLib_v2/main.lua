@@ -104,61 +104,52 @@ function Library.new(config)
 		TextColor3 = Constants.Colors.text,
 		FontFace = Constants.Fonts.regular,
 		TextSize = 13,
-		Size = UDim2.new(0, 0, 0, 24),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.new(0, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		TextWrapped = true,
 		Parent = State.overlayContainer
 	})
 	UIBuilder.create("UICorner", { CornerRadius = UDim.new(0, 4), Parent = State.tooltipGui })
 	UIBuilder.create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = State.tooltipGui })
 
 	-- tooltip positioning
-	local hoverTime = 0
-	local lastMousePos = Vector2.new()
-
-	RunService.RenderStepped:Connect(function(dt)
+	RunService.RenderStepped:Connect(function()
 		if not State.tooltipGui then return end
 
 		if State.hoveredTooltipText then
 			local currentPos = UIS:GetMouseLocation()
-			if (currentPos - lastMousePos).Magnitude > 2 then
-				hoverTime = 0
-				lastMousePos = currentPos
-				State.tooltipGui.Visible = false
-			else
-				hoverTime = hoverTime + dt
-				if hoverTime >= 1.0 and not State.tooltipGui.Visible then
-					State.tooltipGui.Text = State.hoveredTooltipText
+			State.tooltipGui.Text = State.hoveredTooltipText
 
-					local camera = workspace.CurrentCamera
-					local vp = camera and camera.ViewportSize or Vector2.new(1280, 720)
-					local tipWidth = State.tooltipGui.AbsoluteSize.X
-					if tipWidth == 0 then
-						tipWidth = State.tooltipGui.TextBounds.X + 20
-					end
-					local tipHeight = 24
-
-					-- flip to left of cursor
-					local posX = currentPos.X + 12
-					if posX + tipWidth > vp.X - 10 then
-						posX = currentPos.X - tipWidth - 12
-					end
-					posX = math.clamp(posX, 10, math.max(10, vp.X - tipWidth - 10))
-
-					-- flip to top of cursor
-					local posY = currentPos.Y + 12
-					if posY + tipHeight > vp.Y - 10 then
-						posY = currentPos.Y - tipHeight - 12
-					end
-					local topInset = GuiService:GetGuiInset().Y
-					posY = math.clamp(posY, topInset + 5, math.max(topInset + 5, vp.Y - tipHeight - 10))
-
-					State.tooltipGui.Position = UDim2.new(0, posX, 0, posY)
-					State.tooltipGui.Visible = true
-					State.tooltipGui.ZIndex = State.getHighestZ() + 100
-				end
+			local camera = workspace.CurrentCamera
+			local vp = camera and camera.ViewportSize or Vector2.new(1280, 720)
+			local tipWidth = State.tooltipGui.AbsoluteSize.X
+			local tipHeight = State.tooltipGui.AbsoluteSize.Y
+			if tipWidth == 0 then
+				tipWidth = State.tooltipGui.TextBounds.X + 16
 			end
+			if tipHeight == 0 then
+				tipHeight = State.tooltipGui.TextBounds.Y + 8
+			end
+
+			-- flip to left of cursor
+			local posX = currentPos.X + 12
+			if posX + tipWidth > vp.X - 10 then
+				posX = currentPos.X - tipWidth - 12
+			end
+			posX = math.clamp(posX, 10, math.max(10, vp.X - tipWidth - 10))
+
+			-- flip to top of cursor
+			local posY = currentPos.Y + 12
+			if posY + tipHeight > vp.Y - 10 then
+				posY = currentPos.Y - tipHeight - 12
+			end
+			local topInset = GuiService:GetGuiInset().Y
+			posY = math.clamp(posY, topInset + 5, math.max(topInset + 5, vp.Y - tipHeight - 10))
+
+			State.tooltipGui.Position = UDim2.new(0, posX, 0, posY)
+			State.tooltipGui.Visible = true
+			State.tooltipGui.ZIndex = State.getHighestZ() + 100
 		else
-			hoverTime = 0
 			State.tooltipGui.Visible = false
 		end
 	end)
