@@ -7,11 +7,11 @@ Tabs use Roblox's native `UIDragDetector` with pixel-offset positioning. The lib
 
 ## Grid snapping
 
-Grid snapping is enabled by default with a **15 pixel** grid:
+Grid snapping is enabled by default with a **10 pixel** grid:
 
 ```text
 Settings.GridSnap = true
-Settings.GridSize = 15
+Settings.GridSize = 10
 ```
 
 During a drag, X and Y offsets are rounded to the nearest grid multiple. When the drag ends, the final position is snapped again and stored in `TabPositions`.
@@ -23,7 +23,7 @@ The automatic `Settings` tab includes:
 | Control | Behavior |
 | :--- | :--- |
 | **Grid Snapping** | Enables or disables magnetic snapping. |
-| **Grid Snap Size** | Selects 5–30 px in 5 px increments. |
+| **Grid Snap Size** | Selects 5-20 px in 5 px increments. |
 | **Reset Tab Positions** | Clears saved tab position/state and restores the initial stack. |
 
 The selected grid settings persist through the JSON configuration file.
@@ -32,7 +32,7 @@ The selected grid settings persist through the JSON configuration file.
 
 Tab positions are clamped using the current viewport size. The tab header is **200 px** wide, so the X offset stays between `0` and `viewportWidth - 200`; the Y offset stays between `0` and `viewportHeight - 20`.
 
-New tabs start at an X offset of **15 px** and at a Y position based on the GUI inset, with a minimum starting height of **40 px**. Existing tabs are re-clamped when the viewport size changes.
+New tabs start at an X offset of **10 px** and at a Y position based on the GUI inset, with a minimum starting height of **40 px**. Existing tabs are re-clamped when the viewport size changes.
 
 ## Flyouts
 

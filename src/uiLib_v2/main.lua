@@ -403,7 +403,7 @@ function Library.new(config)
 	gridSnapBtn.setVisualState(currentGridSnap)
 
 	-- grid size slider
-	local currentGridSize = (ConfigManager.get("Settings") or {}).GridSize or 15
+	local currentGridSize = (ConfigManager.get("Settings") or {}).GridSize or 10
 	settingsTab:AddSlider({
 		Info = {
 			Title = "Grid Snap Size",
@@ -414,7 +414,7 @@ function Library.new(config)
 			Save = true
 		},
 		Min = 5,
-		Max = 30,
+		Max = 20,
 		Default = currentGridSize,
 		Step = 5,
 		Callback = function(val)

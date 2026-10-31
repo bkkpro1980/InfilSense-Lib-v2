@@ -98,7 +98,7 @@ function Tab.create(tabName, defaultPosition)
 			local finalY = proposedMotion.Y.Offset
 
 			if settings.GridSnap ~= false then
-				local gridSize = settings.GridSize or 15
+				local gridSize = settings.GridSize or 10
 				finalX = snapValue(finalX, gridSize)
 				finalY = snapValue(finalY, gridSize)
 			end
@@ -114,7 +114,7 @@ function Tab.create(tabName, defaultPosition)
 	drag.DragEnd:Connect(function()
 		local settings = ConfigManager.get("Settings") or {}
 		local useGrid = settings.GridSnap ~= false
-		local gridSize = settings.GridSize or 15
+		local gridSize = settings.GridSize or 10
 
 		local finalX = tab.Position.X.Offset
 		local finalY = tab.Position.Y.Offset

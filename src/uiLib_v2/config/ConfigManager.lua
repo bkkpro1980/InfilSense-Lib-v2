@@ -15,7 +15,7 @@ function ConfigManager.getDefault()
 		Keybinds = {}, 
 		Settings = {
 			GridSnap = true,
-			GridSize = 15
+			GridSize = 10
 		}, 
 		TabPositions = {},
 		TabStates = {},
