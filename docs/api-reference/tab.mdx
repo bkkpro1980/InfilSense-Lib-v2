@@ -15,7 +15,7 @@ A `Tab` is a draggable, collapsible floating window. Each tab owns its component
 | `tab:AddTextBox(config)` | Input handle | Alias of `AddInput`. |
 | `tab:AddTextbox(config)` | Input handle | Alias of `AddInput`. |
 | `tab:AddSelection(config)` | Selection handle | Single-select picker by default, or multi-select picker when `MultiSelect = true`. |
-| `tab:AddLabel(config)` | Label handle | Static text row. |
+| `tab:AddLabel(config)` | Label handle | Static text row with native rich text enabled by default. |
 
 ```lua
 local tab = app:CreateTab("Main")
@@ -26,6 +26,11 @@ tab:AddSlider({ Info = { Title = "WalkSpeed" }, Min = 16, Max = 100, Default = 1
 tab:AddInput({ Info = { Title = "Message" } })
 tab:AddSelection({ Info = { Title = "Target" } })
 ```
+
+All component titles and description tooltips support Roblox rich-text markup by
+default. Set `RichText = false` on a component config, or `Info.RichText = false`,
+to render that component's title and tooltip as plain text. See the component pages
+for examples and parameter details.
 
 <Note>
 The implementation accepts an internal second parameter (`pOverride`) on component builders when the library renders nested flyouts. Normal application code should omit it.

@@ -120,6 +120,21 @@ local features = tab:AddSelection({
 
 `AddButton()` acts like an option in both picker modes. Other flyout components such as text boxes, sliders, and labels can still be added when needed.
 
+The parent selection title and description tooltip support Roblox rich-text markup by
+default:
+
+```lua
+tab:AddSelection({
+	Info = {
+		Title = "<b>Target</b> <font color=\"#9D7BFF\">Player</font>",
+		Description = "<i>Choose an active target.</i>",
+	},
+})
+```
+
+Set `RichText = false` on the selection config or inside `Info` to opt out. This
+setting applies to the parent row; nested options use their own component settings.
+
 ## Option callbacks
 
 An option can supply its own callback in either picker mode:
@@ -146,6 +161,11 @@ Text shown on the parent row.
 
 <ParamField path="Info.Description" type="string" optional>
 Tooltip text shown instantly while hovering the row. Use `\n` for line breaks.
+</ParamField>
+
+<ParamField path="RichText" type="boolean" default="true">
+Enables rich-text markup for the selection title and description tooltip. Set to
+`false` to opt out. `Info.RichText` is also accepted.
 </ParamField>
 
 <ParamField path="SingleSelect" type="boolean" optional>

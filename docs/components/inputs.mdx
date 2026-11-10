@@ -58,6 +58,22 @@ The behavior is:
 | Press Enter while enabled | `Callback(true, currentText)` |
 | Press Enter while disabled | No callback execution |
 
+## Rich text
+
+The action title and its description tooltip support Roblox rich-text markup by
+default:
+
+```lua
+tab:AddInput({
+	Info = {
+		Title = "<b>Message</b>",
+		Description = "<font color=\"#9D7BFF\">Enter a message.</font>",
+	},
+})
+```
+
+Set `RichText = false` on the input config or inside `Info` to opt out.
+
 ## Configuration
 
 <ParamField path="Info.Title" type="string" default='"Submit" (or "Toggle")'>
@@ -66,6 +82,11 @@ Text displayed on the action half of the control.
 
 <ParamField path="Info.Description" type="string" optional>
 Tooltip text displayed instantly while hovering the action area. Use `\n` for line breaks.
+</ParamField>
+
+<ParamField path="RichText" type="boolean" default="true">
+Enables rich-text markup for the action title and description tooltip. Set to `false`
+to opt out. `Info.RichText` is also accepted.
 </ParamField>
 
 <ParamField path="DefaultText" type="string" default='""'>

@@ -53,6 +53,29 @@ tab:AddButton({
 
 Toggle callbacks receive the new boolean state.
 
+## Rich text
+
+Button titles and description tooltips render Roblox rich-text markup by default:
+
+```lua
+tab:AddButton({
+	Info = {
+		Title = "<b>Heal</b> <font color=\"#9D7BFF\">Player</font>",
+		Description = "<i>Restores the player's health.</i>",
+	},
+})
+```
+
+Set `RichText = false` on the button config or inside `Info` to render both as plain
+text:
+
+```lua
+tab:AddButton({
+	RichText = false,
+	Info = { Title = "<b>Plain text</b>" },
+})
+```
+
 ## Configuration
 
 <ParamField path="Info.Title" type="string" default='"Button"'>
@@ -61,6 +84,11 @@ Button title. For toggles this is also the displayed toggle label.
 
 <ParamField path="Info.Description" type="string" optional>
 Tooltip text displayed instantly while hovering the control. Use `\n` for line breaks.
+</ParamField>
+
+<ParamField path="RichText" type="boolean" default="true">
+Enables rich-text markup for the button title and description tooltip. Set to `false`
+to opt out. `Info.RichText` is also accepted.
 </ParamField>
 
 <ParamField path="InternalInfo.UniqueCommandId" type="string" optional>

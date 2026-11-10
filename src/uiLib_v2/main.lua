@@ -104,6 +104,7 @@ function Library.new(config)
 		TextColor3 = Constants.Colors.text,
 		FontFace = Constants.Fonts.regular,
 		TextSize = 13,
+		RichText = true,
 		Size = UDim2.new(0, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.XY,
 		TextWrapped = true,
@@ -113,12 +114,21 @@ function Library.new(config)
 	UIBuilder.create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = State.tooltipGui })
 
 	-- tooltip positioning
+	local lastTooltipText = nil
+	local lastTooltipRichText = nil
 	RunService.RenderStepped:Connect(function()
 		if not State.tooltipGui then return end
 
 		if State.hoveredTooltipText then
 			local currentPos = UIS:GetMouseLocation()
-			State.tooltipGui.Text = State.hoveredTooltipText
+			if lastTooltipText ~= State.hoveredTooltipText then
+				State.tooltipGui.Text = State.hoveredTooltipText
+				lastTooltipText = State.hoveredTooltipText
+			end
+			if lastTooltipRichText ~= State.hoveredTooltipRichText then
+				State.tooltipGui.RichText = State.hoveredTooltipRichText
+				lastTooltipRichText = State.hoveredTooltipRichText
+			end
 
 			local camera = workspace.CurrentCamera
 			local vp = camera and camera.ViewportSize or Vector2.new(1280, 720)
@@ -151,6 +161,8 @@ function Library.new(config)
 			State.tooltipGui.ZIndex = State.getHighestZ() + 100
 		else
 			State.tooltipGui.Visible = false
+			lastTooltipText = nil
+			lastTooltipRichText = nil
 		end
 	end)
 

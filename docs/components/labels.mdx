@@ -15,9 +15,30 @@ tab:AddLabel("Player Configuration")
 
 ```lua
 tab:AddLabel({
-	Text = "Character Settings",
+	Text = "<b>Character Settings</b>",
 	TextColor3 = Color3.fromRGB(200, 200, 200),
 	TextSize = 14,
+})
+```
+
+Rich text uses Roblox's native `TextLabel.RichText` markup and is enabled by default:
+
+```lua
+tab:AddLabel({
+	Text = "<font color=\"#9D7BFF\"><b>Character</b></font> <i>Settings</i>",
+})
+```
+
+Set `RichText = false` to opt out. The option is also supported on button, input,
+selection, and slider configs. For those components it formats the title and its
+description tooltip. You can set it on the component config or inside `Info`:
+
+```lua
+tab:AddButton({
+	Info = {
+		Title = "<b>Heal</b>",
+		Description = "<font color=\"#9D7BFF\">Restores health.</font>",
+	},
 })
 ```
 
@@ -51,6 +72,11 @@ Custom text color for this label.
 Text size in pixels.
 </ParamField>
 
+<ParamField path="RichText" type="boolean" default="true">
+Enables Roblox rich-text tags such as `<b>`, `<i>`, `<u>`, `<s>`, `<font>`, and `<br>`.
+Set to `false` to render the content as plain text.
+</ParamField>
+
 ## Returned handle
 
 ```lua
@@ -65,4 +91,6 @@ print(label:GetText())
 | `frame` | Outer label `Frame`. |
 | `textLabel` | Underlying `TextLabel`. |
 | `SetText(text)` | Replaces the label text. |
+| `SetRichText(enabled)` | Enables or disables rich-text rendering. |
 | `GetText()` | Returns the current label text. |
+| `GetRichText()` | Returns whether rich-text rendering is enabled. |

@@ -176,8 +176,17 @@ features:AddOption({ Info = { Title = "Tracers" }, Value = "Tracers" })
 ```lua
 tab:AddLabel("Text label or section title")
 -- Or with detailed properties:
-tab:AddLabel({ Text = "Header Title", TextColor3 = Color3.fromRGB(200, 200, 200), TextSize = 14 })
+tab:AddLabel({
+	Text = "<font color=\"#9D7BFF\"><b>Header</b> Title</font>",
+	TextColor3 = Color3.fromRGB(200, 200, 200),
+	TextSize = 14,
+})
 ```
+
+Rich text is enabled by default and uses Roblox's native `TextLabel.RichText` support.
+Set `RichText = false` to opt out. The same option can be set on button, input,
+selection, and slider configs (or inside `Info`) to format their titles and description
+tooltips.
 
 ---
 

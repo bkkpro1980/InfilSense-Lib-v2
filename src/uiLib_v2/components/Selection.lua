@@ -26,6 +26,7 @@ end
 function Selection.create(tabObj, config, parentOverride)
 	local parent = parentOverride or tabObj.tabData.scroll
 	local info = config.Info or {}
+	local richText = config.RichText ~= false and info.RichText ~= false
 	local internalInfo = config.InternalInfo or {}
 	local commandId = internalInfo.UniqueCommandId or Constants.randomString()
 	local aliases = config.Aliases or info.Aliases or internalInfo.Aliases or {}
@@ -110,6 +111,7 @@ function Selection.create(tabObj, config, parentOverride)
 		TextColor3 = Constants.Colors.text,
 		FontFace = Constants.Fonts.regular,
 		TextSize = 14,
+		RichText = richText,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Text = info.Title or "Selection",
 		TextTruncate = Enum.TextTruncate.AtEnd,
@@ -200,7 +202,7 @@ function Selection.create(tabObj, config, parentOverride)
 
 	button.MouseEnter:Connect(function()
 		frame.BackgroundColor3 = Constants.darkenColor(Constants.Colors.background, 0.02)
-		if info.Description then State.showTooltip(info.Description) end
+		if info.Description then State.showTooltip(info.Description, richText) end
 	end)
 	button.MouseLeave:Connect(function()
 		frame.BackgroundColor3 = Constants.Colors.background

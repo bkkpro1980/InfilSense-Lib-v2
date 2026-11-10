@@ -24,6 +24,7 @@ local State = {
 	
 	tooltipGui = nil,
 	hoveredTooltipText = nil,
+	hoveredTooltipRichText = true,
 
 	themeListeners = {},
 }
@@ -76,13 +77,15 @@ function State.hideAllMoreScrolls(exceptTabName, exceptOwner)
 	end
 end
 
-function State.showTooltip(text)
+function State.showTooltip(text, richText)
 	State.hoveredTooltipText = text
+	State.hoveredTooltipRichText = richText ~= false
 end
 
 function State.hideTooltip(text)
 	if State.hoveredTooltipText == text then
 		State.hoveredTooltipText = nil
+		State.hoveredTooltipRichText = true
 	end
 end
 

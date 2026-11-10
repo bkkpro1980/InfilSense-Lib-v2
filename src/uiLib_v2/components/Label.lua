@@ -7,6 +7,7 @@ function Label.create(tabObj, config, parentOverride)
 	local textContent = ""
 	local textColor = Constants.Colors.text
 	local textSize = 13
+	local richText = true
 
 	if type(config) == "string" then
 		textContent = config
@@ -14,6 +15,7 @@ function Label.create(tabObj, config, parentOverride)
 		textContent = config.Text or (config.Info and config.Info.Title) or "Label"
 		textColor = config.TextColor3 or textColor
 		textSize = config.TextSize or textSize
+		richText = config.RichText ~= false and (not config.Info or config.Info.RichText ~= false)
 	end
 
 	local frame = UIBuilder.create("Frame", {
@@ -33,6 +35,7 @@ function Label.create(tabObj, config, parentOverride)
 		BackgroundTransparency = 1,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextSize = textSize,
+		RichText = richText,
 		Size = UDim2.new(1, -6, 1, 0),
 		Position = UDim2.new(0, 3, 0.5, 0),
 		AnchorPoint = Vector2.new(0, 0.5),
@@ -49,6 +52,12 @@ function Label.create(tabObj, config, parentOverride)
 		textLabel = textLabel,
 		SetText = function(_, newText)
 			textLabel.Text = tostring(newText)
+		end,
+		SetRichText = function(_, enabled)
+			textLabel.RichText = enabled == true
+		end,
+		GetRichText = function()
+			return textLabel.RichText
 		end,
 		GetText = function()
 			return textLabel.Text

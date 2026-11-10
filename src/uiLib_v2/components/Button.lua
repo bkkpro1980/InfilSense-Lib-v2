@@ -8,6 +8,7 @@ local KeybindManager = require("@config/KeybindManager")
 function Button.create(tabObj, config, parentOverride)
 	local parent = parentOverride or tabObj.tabData.scroll
 	local info = config.Info or {}
+	local richText = config.RichText ~= false and info.RichText ~= false
 	local internalInfo = config.InternalInfo or {}
 	local commandId = internalInfo.UniqueCommandId or Constants.randomString()
 
@@ -46,6 +47,7 @@ function Button.create(tabObj, config, parentOverride)
 		BackgroundTransparency = 1,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextSize = 14,
+		RichText = richText,
 		Size = UDim2.new(1, 0, 1, 0),
 		Position = UDim2.new(0.5, 0, 0.5, 0),
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -86,7 +88,7 @@ function Button.create(tabObj, config, parentOverride)
 
 	button.MouseEnter:Connect(function() 
 		frame.BackgroundColor3 = Constants.darkenColor(Constants.Colors.background, 0.02)
-		if info.Description then State.showTooltip(info.Description) end
+		if info.Description then State.showTooltip(info.Description, richText) end
 	end)
 	button.MouseLeave:Connect(function() 
 		frame.BackgroundColor3 = Constants.Colors.background 

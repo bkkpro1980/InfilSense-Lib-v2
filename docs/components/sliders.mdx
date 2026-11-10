@@ -47,6 +47,23 @@ tab:AddSlider({
 
 The boolean implementation stores `0` and `1`, and displays **Off** / **On**.
 
+## Rich text
+
+Slider labels and description tooltips support Roblox rich-text markup by default:
+
+```lua
+tab:AddSlider({
+	Info = {
+		Title = "<b>WalkSpeed</b>",
+		Description = "<font color=\"#9D7BFF\">Adjust movement speed.</font>",
+	},
+	Min = 16,
+	Max = 250,
+})
+```
+
+Set `RichText = false` on the slider config or inside `Info` to opt out.
+
 ## Configuration
 
 <ParamField path="Info.Title" type="string" default='"Slider"'>
@@ -55,6 +72,11 @@ Slider label.
 
 <ParamField path="Info.Description" type="string" optional>
 Tooltip text shown instantly while hovering the slider row. Use `\n` for line breaks.
+</ParamField>
+
+<ParamField path="RichText" type="boolean" default="true">
+Enables rich-text markup for the slider label and description tooltip. Set to `false`
+to opt out. `Info.RichText` is also accepted.
 </ParamField>
 
 <ParamField path="Min" type="number" default="0">
